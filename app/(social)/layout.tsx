@@ -1,29 +1,77 @@
-import { Navbar } from "@/components/navigations/social/navbar";
 import { Sidebar } from "@/components/navigations/social/sidebar";
+import { Button } from "@heroui/button";
+import { Input } from "@heroui/input";
+import { User } from "@heroui/user";
+import { Search } from "lucide-react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      <div className="absolute top-0 z-[-2] h-screen w-full bg-background bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
+    <div className="flex min-h-screen max-w-7xl mx-auto px-4">
+      <aside className="w-1/5 hidden lg:block">
+        <Sidebar />
+      </aside>
 
-      <Navbar />
-
-      <div className="flex min-h-screen">
-        <aside className="hidden md:block md:w-1/4 lg:w-1/6 border-r border-foreground-200 h-screen overflow-y-auto">
-          <Sidebar />
-        </aside>
-
-        <main className="w-full md:w-3/4 lg:w-4/6 p-4">{children}</main>
-
-        <aside className="hidden lg:block lg:w-1/6 border-l border-foreground-200 h-screen overflow-y-auto p-4">
-          <h2 className="font-bold text-lg mb-4">Trending</h2>
-          <ul className="space-y-2">
-            <li className="p-2 hover:bg-foreground-100 rounded-md">Post 1</li>
-            <li className="p-2 hover:bg-foreground-100 rounded-md">Post 2</li>
-            <li className="p-2 hover:bg-foreground-100 rounded-md">Post 3</li>
-          </ul>
-        </aside>
+      <div className="flex flex-col w-full lg:w-2/4 border-x border-foreground-100">
+        {children}
       </div>
-    </>
+
+      <aside className="w-1/4 hidden xl:block pl-4">
+        <div className="sticky top-0 z-20 h-16 bg-background">
+          <div className="flex items-center justify-center w-full h-full">
+            <Input
+              variant="bordered"
+              radius="full"
+              startContent={<Search size={16} />}
+              placeholder="Search..."
+              classNames={{
+                inputWrapper: "border-1 border-foreground-100",
+              }}
+            />
+          </div>
+        </div>
+
+        <div className="p-4 rounded-xl border border-foreground-100">
+          <h2 className="text-lg font-semibold mb-4">Who to follow</h2>
+          <ul className="space-y-2 text-sm">
+            <li className="flex items-center justify-between">
+              <User
+                avatarProps={{
+                  src: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
+                }}
+                name="John Doe"
+                description="@johndoe"
+              />
+              <Button size="sm" radius="full">
+                Follow
+              </Button>
+            </li>
+            <li className="flex items-center justify-between">
+              <User
+                avatarProps={{
+                  src: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
+                }}
+                name="John Doe"
+                description="@johndoe"
+              />
+              <Button size="sm" radius="full">
+                Follow
+              </Button>
+            </li>
+            <li className="flex items-center justify-between">
+              <User
+                avatarProps={{
+                  src: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
+                }}
+                name="John Doe"
+                description="@johndoe"
+              />
+              <Button size="sm" radius="full">
+                Follow
+              </Button>
+            </li>
+          </ul>
+        </div>
+      </aside>
+    </div>
   );
 }

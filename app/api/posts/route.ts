@@ -8,7 +8,7 @@ const PostSchema = z.object({
     .string()
     .min(10, "Content must be at least 10 characters long")
     .max(5000, "Content must be at most 5000 characters long"),
-  parent_id: z.number().optional(), 
+  parent_id: z.number().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -56,7 +56,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         message: "Post created successfully",
-        data: savedPost,
+        data: {
+          ...savedPost,
+          author: {
+            id: user.id,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            username: user.username,
+            profile_pict: user.profile_pict,
+          },
+          _count: {
+            liked_by: 0,
+            disliked_by: 0,
+            reposted_by: 0,
+            saved_by: 0,
+          },
+        },
       },
       {
         status: 201,
@@ -75,6 +90,15 @@ export async function GET() {
     const posts = await db.post.findMany({
       include: {
         parent: true,
+        author: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            username: true,
+            profile_pict: true,
+          },
+        },
         _count: {
           select: {
             liked_by: true,
@@ -82,8 +106,9 @@ export async function GET() {
             reposted_by: true,
             saved_by: true,
           },
-        }
+        },
       },
+      orderBy: { created_at: "desc" },
     });
 
     return NextResponse.json({
