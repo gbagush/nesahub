@@ -2,13 +2,16 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 
-
 export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const userId = (await params).id;
-        const user = await db.user.findUnique({
+        const following = await db.user.findMany({
             where: {
-                clerk_id: userId
+                followers: {
+                    some: {
+                        clerk_id: userId
+                    }
+                }
             },
             include: {
                 _count: {
@@ -20,12 +23,14 @@ export async function GET(_: NextRequest, { params }: { params: Promise<{ id: st
                 }
             }
         });
-        if (!user) {
-            return NextResponse.json({ message: "User not found" }, { status: 404 });
+        if (following.length === 0) {
+            return NextResponse.json({ message: "Following not found" }, { status: 404 });
         }
-        return NextResponse.json(user);
+        return  NextResponse.json({
+            message: "Following found",
+            data: following,
+        })
     } catch (error) {
         return NextResponse.json({ message: "Internal server error." }, { status: 500 });
     }
-    
 }

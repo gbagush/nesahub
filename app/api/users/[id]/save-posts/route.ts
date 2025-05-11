@@ -3,12 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 
 
-export async function GET(_: NextRequest, { params } : { params: Promise <{ id: string }>}) {
+export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         const userId = (await params).id;
         const posts = await db.post.findMany({
             where: {
-                user_id: Number(userId),
+                saved_by: {
+                    some: {
+                        clerk_id: userId
+                    }
+                }
             },
             include: {
                 author: {
@@ -38,11 +42,8 @@ export async function GET(_: NextRequest, { params } : { params: Promise <{ id: 
         return NextResponse.json({
             message: "Posts fetched successfully",
             data: posts,
-        });
+        })
     } catch (error) {
-        return NextResponse.json(
-            { message: "Internal server error." },
-            { status: 500 }
-        );
+        return NextResponse.json({ message: "Internal server error." }, { status: 500 });
     }
-}
+}   
