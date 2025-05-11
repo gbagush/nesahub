@@ -6,10 +6,57 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../lib/generated/prisma"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  clerk_id      String    @unique
+  first_name    String
+  last_name     String
+  username      String    @unique
+  email         String    @unique
+  profile_pict  String
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  banned_until  DateTime?
+  deleted_at    DateTime?
+
+  posts         Post[]    @relation("UserPosts")
+  liked_post    Post[]    @relation("PostLikes")
+  disliked_post Post[]    @relation("PostDislikes")
+  reposts       Post[]    @relation("PostReposts")
+  saved_posts   Post[]    @relation("PostSaves")
+
+  following     User[]    @relation("UserFollows")
+  followers     User[]    @relation("UserFollows")
+
+  @@map("users")
+}
+
+model Post {
+  id            Int       @id @default(autoincrement())
+  title         String
+  content       String    @db.Text
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+  deleted_at    DateTime?
+
+  user_id       Int
+  author        User      @relation("UserPosts", fields: [user_id], references: [id])
+
+  parent_id     Int?
+  parent        Post?     @relation("PostReplies", fields: [parent_id], references: [id])
+  replies       Post[]    @relation("PostReplies")
+
+  liked_by      User[]    @relation("PostLikes")
+  disliked_by   User[]    @relation("PostDislikes")
+  reposted_by   User[]    @relation("PostReposts")
+  saved_by      User[]    @relation("PostSaves")
+
+  @@map("posts")
 }
