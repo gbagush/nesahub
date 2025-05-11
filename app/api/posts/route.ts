@@ -1,18 +1,14 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { z } from "zod";
-
 import { NextRequest, NextResponse } from "next/server";
 
 const PostSchema = z.object({
-  title: z
-    .string()
-    .min(1, "Title is required")
-    .max(100, "Title must be at most 100 characters long"),
   content: z
     .string()
     .min(10, "Content must be at least 10 characters long")
     .max(5000, "Content must be at most 5000 characters long"),
+  parent_id: z.number().optional(), 
 });
 
 export async function POST(request: NextRequest) {
@@ -33,11 +29,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, content } = parsed.data;
+    const { content, parent_id } = parsed.data;
 
     const user = await db.user.findUnique({
       where: {
-        clerk_id: "some-clerk-id",
+        clerk_id: userId,
       },
     });
 
@@ -47,11 +43,13 @@ export async function POST(request: NextRequest) {
 
     const savedPost = await db.post.create({
       data: {
-        title: title,
-        content: content,
+        content,
         author: {
           connect: { id: user.id },
         },
+        ...(parent_id && {
+          parent: { connect: { id: parent_id } },
+        }),
       },
     });
 
@@ -65,7 +63,34 @@ export async function POST(request: NextRequest) {
       }
     );
   } catch (error) {
-    console.error("Error: Failed creating new post: ", error);
+    return NextResponse.json(
+      { message: "Internal server error." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET() {
+  try {
+    const posts = await db.post.findMany({
+      include: {
+        parent: true,
+        _count: {
+          select: {
+            liked_by: true,
+            disliked_by: true,
+            reposted_by: true,
+            saved_by: true,
+          },
+        }
+      },
+    });
+
+    return NextResponse.json({
+      message: "Posts fetched successfully",
+      data: posts,
+    });
+  } catch (error) {
     return NextResponse.json(
       { message: "Internal server error." },
       { status: 500 }
