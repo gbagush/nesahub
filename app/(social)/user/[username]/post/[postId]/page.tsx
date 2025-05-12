@@ -1,5 +1,8 @@
-import UserPostPage from "@/components/user-post/user-post-page";
 import axios from "axios";
+
+import UserPostPage from "@/components/user-post/user-post-page";
+
+import { PostNotFound } from "@/components/user-post/post-not-found";
 
 export default async function PostPage({
   params,
@@ -17,11 +20,12 @@ export default async function PostPage({
 
     const post = response.data?.data;
 
-    if (!post) return <h1>Not Found</h1>;
+    if (!post) return <PostNotFound />;
+
+    if (post.author.username !== username) return <PostNotFound />;
 
     return <UserPostPage username={username} postId={numericPostId} />;
   } catch (error) {
-    console.error("Error: Error while access post page: ", error);
-    return <h1>Error</h1>;
+    return <PostNotFound />;
   }
 }

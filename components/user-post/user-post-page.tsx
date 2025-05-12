@@ -6,15 +6,13 @@ import { useState, useEffect } from "react";
 
 import { addToast } from "@heroui/toast";
 
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@heroui/button";
 import { CreatePostForm } from "../commons/create-post-form";
 import { Spinner } from "@heroui/spinner";
 
 import { PostCard } from "@/components/commons/post-card";
+import { SocialNav } from "../navigations/social/social-nav";
 
 import type { Post } from "@/types/post";
-import { SocialNav } from "../navigations/social/social-nav";
 
 export default function UserPostPage({
   username,

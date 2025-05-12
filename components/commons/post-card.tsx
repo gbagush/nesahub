@@ -172,13 +172,13 @@ export const PostCard = ({
   return (
     <div className="flex flex-col p-4 gap-4 w-full border-b border-foreground-100">
       <div className="flex gap-2 items-start w-full">
-        <Link href={`/${author.username}`}>
+        <Link href={`/user/${author.username}`}>
           <Avatar src={author.profile_pict} />
         </Link>
 
         <div className="flex-1 min-w-0">
           <Link
-            href={`/${author.username}`}
+            href={`/user/${author.username}`}
             className="flex items-center text-sm break-words"
           >
             <span className="font-semibold">{`${author.first_name} ${author.last_name}`}</span>
@@ -193,7 +193,7 @@ export const PostCard = ({
             <p className="text-sm text-foreground-500">
               Reply{" "}
               <Link
-                href={`/${post.parent.author.username}/post/${post.parent.id}`}
+                href={`/user/${post.parent.author.username}/post/${post.parent.id}`}
                 className="text-primary"
               >
                 @{post.parent.author.username}
@@ -201,13 +201,13 @@ export const PostCard = ({
             </p>
           )}
 
-          <Link href={`/${author.username}/post/${post.id}`}>
+          <Link href={`/user/${author.username}/post/${post.id}`}>
             <p className="text-sm whitespace-pre-line break-words">{content}</p>
           </Link>
 
           <div className="flex justify-between w-3/4 mt-4">
             <Link
-              href={`/${author.username}/post/${post.id}`}
+              href={`/user/${author.username}/post/${post.id}`}
               className="flex items-center gap-1 text-foreground-500 hover:text-primary"
             >
               <MessagesSquare size={16} />

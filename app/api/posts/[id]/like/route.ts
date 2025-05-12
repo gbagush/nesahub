@@ -17,9 +17,6 @@ export async function POST(
 
     const post = await db.post.findUnique({
       where: { id: postId },
-      include: {
-        liked_by: true,
-      },
     });
 
     if (!post) {
