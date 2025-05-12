@@ -2,14 +2,14 @@ import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 
-export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_: NextRequest, { params }: { params: Promise<{ username: string }> }) {
     try {
-        const userId = (await params).id;
+        const userUsername = (await params).username;
         const followers = await db.user.findMany({
             where: {
                 following: {
                     some: {
-                        clerk_id: userId
+                        username: userUsername
                     }
                 }
             },

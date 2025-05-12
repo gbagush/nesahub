@@ -3,12 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 
 
 
-export async function GET(_: NextRequest, { params } : { params: Promise <{ id: string }>}) {
+export async function GET(_: NextRequest, { params } : { params: Promise <{ username: string }>}) {
     try {
-        const userId = (await params).id;
+        const userUsername = await db.user.findUnique({
+            where: {
+                username: (await params).username
+            }
+        });
         const posts = await db.post.findMany({
             where: {
-                user_id: Number(userId),
+                user_id: Number(userUsername?.id),
             },
             include: {
                 author: {

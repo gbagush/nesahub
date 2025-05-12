@@ -3,14 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 
 
-export async function GET(_: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(_: NextRequest, { params }: { params: Promise<{ username: string }> }) {
     try {
-        const userId = (await params).id;
+        const userUsername = (await params).username;
         const posts = await db.post.findMany({
             where: {
                 saved_by: {
                     some: {
-                        clerk_id: userId
+                        username: userUsername
                     }
                 }
             },
