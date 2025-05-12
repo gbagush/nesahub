@@ -14,39 +14,98 @@ const PostSchema = z.object({
 
 export async function GET(
   _: NextRequest,
-  { params }: { params: Promise<{ id: string }>  }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { userId } = await auth();
+
+    let internalUserId: number | null = null;
+
+    if (userId) {
+      const user = await db.user.findUnique({
+        where: { clerk_id: userId },
+        select: { id: true },
+      });
+      internalUserId = user?.id ?? null;
+    }
+
     const postId = (await params).id;
     const post = await db.post.findUnique({
       where: {
         id: Number(postId),
       },
       include: {
-        parent: true,
-        author: {
-            select : {
+        parent: {
+          include: {
+            author: {
+              select: {
                 id: true,
                 first_name: true,
                 last_name: true,
                 username: true,
-                profile_pict: true
-            }
+                profile_pict: true,
+              },
+            },
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            username: true,
+            profile_pict: true,
+          },
         },
         _count: {
           select: {
+            replies: true,
             liked_by: true,
             disliked_by: true,
             reposted_by: true,
             saved_by: true,
           },
         },
+        liked_by: internalUserId
+          ? {
+              where: { id: internalUserId },
+              select: { id: true },
+            }
+          : false,
+        disliked_by: internalUserId
+          ? {
+              where: { id: internalUserId },
+              select: { id: true },
+            }
+          : false,
+        reposted_by: internalUserId
+          ? {
+              where: { id: internalUserId },
+              select: { id: true },
+            }
+          : false,
+        saved_by: internalUserId
+          ? {
+              where: { id: internalUserId },
+              select: { id: true },
+            }
+          : false,
       },
     });
 
     if (!post) {
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
     }
+
+    (post as any).is_liked = post.liked_by?.length > 0;
+    (post as any).is_disliked = post.disliked_by?.length > 0;
+    (post as any).is_reposted = post.reposted_by?.length > 0;
+    (post as any).is_saved = post.saved_by?.length > 0;
+
+    delete (post as any).liked_by;
+    delete (post as any).disliked_by;
+    delete (post as any).reposted_by;
+    delete (post as any).saved_by;
 
     return NextResponse.json({
       message: "Post fetched successfully",

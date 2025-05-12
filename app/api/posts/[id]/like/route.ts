@@ -26,15 +26,6 @@ export async function POST(
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
     }
 
-    const alreadyLiked = post.liked_by.some((user) => user.clerk_id === userId);
-
-    if (alreadyLiked) {
-      return NextResponse.json(
-        { message: "You already liked this post" },
-        { status: 200 }
-      );
-    }
-
     await db.post.update({
       where: { id: postId },
       data: {
@@ -49,6 +40,38 @@ export async function POST(
 
     return NextResponse.json({ message: "Post liked successfully" });
   } catch (error) {
+    return NextResponse.json(
+      { message: "Internal server error." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const postId = Number((await params).id);
+
+    await db.post.update({
+      where: { id: postId },
+      data: {
+        liked_by: {
+          disconnect: { clerk_id: userId },
+        },
+      },
+    });
+
+    return NextResponse.json({ message: "Dislike removed successfully" });
+  } catch (error) {
+    console.error("Undislike error:", error);
     return NextResponse.json(
       { message: "Internal server error." },
       { status: 500 }

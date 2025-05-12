@@ -1,28 +1,27 @@
-import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
+import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET(
-  _: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(_: NextRequest) {
   try {
     const { userId } = await auth();
 
-    let internalUserId: number | null = null;
-
-    if (userId) {
-      const user = await db.user.findUnique({
-        where: { clerk_id: userId },
-        select: { id: true },
-      });
-      internalUserId = user?.id ?? null;
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const postId = (await params).id;
-    const replies = await db.post.findMany({
+    const user = await db.user.findUnique({
+      where: { clerk_id: userId },
+      select: { id: true },
+    });
+
+    const savedPosts = await db.post.findMany({
       where: {
-        parent_id: Number(postId),
+        saved_by: {
+          some: {
+            clerk_id: userId,
+          },
+        },
       },
       include: {
         parent: {
@@ -56,34 +55,37 @@ export async function GET(
             saved_by: true,
           },
         },
-        liked_by: internalUserId
+        liked_by: user?.id
           ? {
-              where: { id: internalUserId },
+              where: { id: user?.id },
               select: { id: true },
             }
           : false,
-        disliked_by: internalUserId
+        disliked_by: user?.id
           ? {
-              where: { id: internalUserId },
+              where: { id: user?.id },
               select: { id: true },
             }
           : false,
-        reposted_by: internalUserId
+        reposted_by: user?.id
           ? {
-              where: { id: internalUserId },
+              where: { id: user?.id },
               select: { id: true },
             }
           : false,
-        saved_by: internalUserId
+        saved_by: user?.id
           ? {
-              where: { id: internalUserId },
+              where: { id: user?.id },
               select: { id: true },
             }
           : false,
       },
+      orderBy: {
+        created_at: "desc",
+      },
     });
 
-    for (const post of replies as any[]) {
+    for (const post of savedPosts as any[]) {
       post.is_liked = post.liked_by?.length > 0;
       post.is_disliked = post.disliked_by?.length > 0;
       post.is_reposted = post.reposted_by?.length > 0;
@@ -95,10 +97,10 @@ export async function GET(
       delete post.saved_by;
     }
 
-    return NextResponse.json({
-      message: "Replies fetched successfully",
-      data: replies,
-    });
+    return NextResponse.json(
+      { mesage: "Success getting all saved posts.", data: savedPosts },
+      { status: 200 }
+    );
   } catch (error) {
     return NextResponse.json(
       { message: "Internal server error." },

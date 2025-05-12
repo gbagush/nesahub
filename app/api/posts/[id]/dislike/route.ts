@@ -18,7 +18,9 @@ export async function POST(
     const post = await db.post.findUnique({
       where: { id: postId },
       include: {
-        liked_by: true,
+        liked_by: {
+          where: { clerk_id: userId },
+        },
       },
     });
 
@@ -40,6 +42,39 @@ export async function POST(
 
     return NextResponse.json({ message: "Post disliked successfully" });
   } catch (error) {
+    console.error("Dislike error:", error);
+    return NextResponse.json(
+      { message: "Internal server error." },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  _: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { userId } = await auth();
+
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    const postId = Number((await params).id);
+
+    await db.post.update({
+      where: { id: postId },
+      data: {
+        disliked_by: {
+          disconnect: { clerk_id: userId },
+        },
+      },
+    });
+
+    return NextResponse.json({ message: "Dislike removed successfully" });
+  } catch (error) {
+    console.error("Undislike error:", error);
     return NextResponse.json(
       { message: "Internal server error." },
       { status: 500 }

@@ -6,12 +6,17 @@ export interface Post {
   deleted_at?: string;
   user_id: number;
   parent_id?: number;
-  parent?: any;
+  parent?: Post;
   author: PostAuthor;
   _count: PostCount;
+  is_disliked?: boolean;
+  is_liked?: boolean;
+  is_reposted?: boolean;
+  is_saved?: boolean;
 }
 
 export interface PostCount {
+  replies: number;
   liked_by: number;
   disliked_by: number;
   reposted_by: number;

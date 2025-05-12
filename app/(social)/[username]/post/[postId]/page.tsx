@@ -19,9 +19,7 @@ export default async function PostPage({
 
     if (!post) return <h1>Not Found</h1>;
 
-    return (
-      <UserPostPage post={post} username={username} postId={numericPostId} />
-    );
+    return <UserPostPage username={username} postId={numericPostId} />;
   } catch (error) {
     console.error("Error: Error while access post page: ", error);
     return <h1>Error</h1>;

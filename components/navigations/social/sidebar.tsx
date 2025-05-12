@@ -1,9 +1,12 @@
 "use client";
+
+import Link from "next/link";
 import Image from "next/image";
 
-import { SignIn, SignInButton, useClerk, useUser } from "@clerk/nextjs";
+import { SignInButton, useClerk, useUser } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
 
+import { Button } from "@heroui/button";
 import {
   Bookmark,
   Home,
@@ -17,26 +20,26 @@ import {
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
-  DropdownSection,
   DropdownItem,
 } from "@heroui/dropdown";
 import { User } from "@heroui/user";
 
 import Logo from "@/public/logo.svg";
-import { Button } from "@heroui/button";
 
 export const Sidebar = () => {
-  const { theme } = useTheme();
-
   return (
     <nav className="hidden fixed md:flex md:flex-col p-4 h-screen overflow-y-auto">
-      <Image src={Logo} alt="Logo" className="w-12 h-12 mb-4" />
+      <Image src={Logo} alt="Logo" className="w-12 h-12 mb-4 ml-2" />
 
       <div className="flex flex-col gap-2 w-full">
-        <SidebarItem icon={<Home size={24} />} title="Home" isActive={true} />
-        <SidebarItem icon={<Search size={24} />} title="Explore" />
-        <SidebarItem icon={<Bookmark size={24} />} title="Saved Posts" />
-        <SidebarItem icon={<UserIcon size={24} />} title="Profile" />
+        <SidebarItem icon={<Home size={24} />} title="Home" href="/home" />
+        <SidebarItem icon={<Search size={24} />} title="Explore" href="#" />
+        <SidebarItem
+          icon={<Bookmark size={24} />}
+          title="Saved Posts"
+          href="/saved"
+        />
+        <SidebarItem icon={<UserIcon size={24} />} title="Profile" href="#" />
       </div>
 
       <SidebarUserProfile />
@@ -51,17 +54,18 @@ export const SidebarItem = ({
   isActive = false,
 }: {
   icon: React.ReactNode;
-  title: String;
-  href?: String;
+  title: string;
+  href: string;
   isActive?: boolean;
 }) => {
   return (
-    <div
-      className={`flex items-center py-2 gap-4 rounded-lg hover:bg-background ${isActive && "bg-background"}`}
+    <Link
+      href={href}
+      className={`flex items-center py-2 px-4 gap-4 rounded-full hover:bg-foreground-100 ${isActive && ""}`}
     >
       {icon}
       <span className="text-lg">{title}</span>
-    </div>
+    </Link>
   );
 };
 
@@ -75,7 +79,7 @@ export const SidebarUserProfile = () => {
   };
 
   return (
-    <div className="mt-auto">
+    <div className="mt-auto px-4">
       {isSignedIn && isLoaded ? (
         <Dropdown placement="right">
           <DropdownTrigger>
