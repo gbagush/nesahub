@@ -26,8 +26,10 @@ export async function GET(
 
     const posts = await db.post.findMany({
       where: {
-        author: {
-          username,
+        reposted_by: {
+          some: {
+            username,
+          },
         },
       },
       include: {

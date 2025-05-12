@@ -27,6 +27,8 @@ import { User } from "@heroui/user";
 import Logo from "@/public/logo.svg";
 
 export const Sidebar = () => {
+  const { isSignedIn, user } = useUser();
+
   return (
     <nav className="hidden fixed md:flex md:flex-col p-4 h-screen overflow-y-auto">
       <Image src={Logo} alt="Logo" className="w-12 h-12 mb-4 ml-2" />
@@ -39,7 +41,13 @@ export const Sidebar = () => {
           title="Saved Posts"
           href="/saved"
         />
-        <SidebarItem icon={<UserIcon size={24} />} title="Profile" href="#" />
+        {isSignedIn && (
+          <SidebarItem
+            icon={<UserIcon size={24} />}
+            title="Profile"
+            href={`/user/${user.username}`}
+          />
+        )}
       </div>
 
       <SidebarUserProfile />

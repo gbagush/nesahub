@@ -1,4 +1,4 @@
-import { Sidebar } from "@/components/navigations/social/sidebar";
+import { Sidebar } from "@/components/commons/navigations/social/sidebar";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { User } from "@heroui/user";

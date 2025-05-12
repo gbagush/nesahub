@@ -6,11 +6,11 @@ import { useState, useEffect } from "react";
 
 import { addToast } from "@heroui/toast";
 
-import { CreatePostForm } from "../commons/create-post-form";
+import { CreatePostForm } from "../commons/post/create-post-form";
 import { Spinner } from "@heroui/spinner";
 
-import { PostCard } from "@/components/commons/post-card";
-import { SocialNav } from "../navigations/social/social-nav";
+import { PostCard } from "@/components/commons/post/post-card";
+import { Navbar } from "../commons/navigations/social/navbar";
 
 import type { Post } from "@/types/post";
 
@@ -64,7 +64,7 @@ export default function UserPostPage({
 
   return (
     <>
-      <SocialNav title="Post" />
+      <Navbar title="Post" />
 
       {loading && <Spinner className="py-4" />}
 

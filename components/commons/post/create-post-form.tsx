@@ -23,10 +23,10 @@ export const CreatePostForm = ({
   const { user } = useUser();
 
   const handleCreatePost = async () => {
-    if (content.length < 15 || content.length > 5000) {
+    if (content.length < 10 || content.length > 5000) {
       addToast({
         title: "Error",
-        description: "Post must be between 15 and 5000 characters.",
+        description: "Post must be between 10 and 5000 characters.",
         color: "danger",
       });
       return;
@@ -83,7 +83,7 @@ export const CreatePostForm = ({
             <Button
               className="font-semibold"
               radius="full"
-              isDisabled={content.length < 15 || content.length > 5000}
+              isDisabled={content.length < 10 || content.length > 5000}
               onPress={handleCreatePost}
             >
               Post

@@ -7,9 +7,9 @@ import { useUser } from "@clerk/nextjs";
 import { addToast } from "@heroui/toast";
 import { Spinner } from "@heroui/spinner";
 
-import { CreatePostForm } from "@/components/commons/create-post-form";
-import { Navbar } from "@/components/navigations/social/navbar";
-import { PostCard } from "@/components/commons/post-card";
+import { CreatePostForm } from "@/components/commons/post/create-post-form";
+import { NavTab } from "@/components/commons/navigations/social/tab";
+import { PostCard } from "@/components/commons/post/post-card";
 
 import type { Post } from "@/types/post";
 
@@ -40,7 +40,13 @@ export default function Home() {
 
   return (
     <>
-      <Navbar />
+      <NavTab
+        items={[
+          { label: "For you", href: "/home" },
+          { label: "Following", href: "/home/following" },
+        ]}
+        isSticky
+      />
 
       <section className="flex flex-col items-center justify-center gap-4">
         {isSignedIn && (

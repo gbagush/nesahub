@@ -6,8 +6,8 @@ import { useState, useEffect } from "react";
 import { addToast } from "@heroui/toast";
 import { Spinner } from "@heroui/spinner";
 
-import { PostCard } from "@/components/commons/post-card";
-import { SocialNav } from "@/components/navigations/social/social-nav";
+import { PostCard } from "@/components/commons/post/post-card";
+import { Navbar } from "@/components/commons/navigations/social/navbar";
 
 import type { Post } from "@/types/post";
 
@@ -36,7 +36,7 @@ export default function SavedPostsPage() {
 
   return (
     <>
-      <SocialNav title="Saved posts" />
+      <Navbar title="Saved posts" />
 
       {loading && (
         <div className="flex w-full h-24 items-center justify-center">

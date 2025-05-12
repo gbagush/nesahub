@@ -32,7 +32,6 @@ export const PostCard = ({
   const handleAction = async (
     action: "like" | "dislike" | "repost" | "save"
   ) => {
-    // Check if the action is already active - moved outside try block so it's accessible in catch
     let isActive = false;
 
     switch (action) {
@@ -52,7 +51,6 @@ export const PostCard = ({
 
     try {
       if (isActive) {
-        // If action is already active, remove it (DELETE request)
         await axios.delete(`/api/posts/${post.id}/${action}`);
 
         setPost((prevPost) => {
@@ -98,7 +96,6 @@ export const PostCard = ({
           }
         });
       } else {
-        // If action is not active, add it (POST request)
         await axios.post(`/api/posts/${post.id}/${action}`);
 
         setPost((prevPost) => {
@@ -106,10 +103,8 @@ export const PostCard = ({
 
           switch (action) {
             case "like":
-              // Increment like count
               updatedCount.liked_by += 1;
 
-              // If post was disliked, decrement dislike count
               if (prevPost.is_disliked) {
                 updatedCount.disliked_by = Math.max(
                   0,
@@ -124,10 +119,8 @@ export const PostCard = ({
                 is_disliked: false,
               };
             case "dislike":
-              // Increment dislike count
               updatedCount.disliked_by += 1;
 
-              // If post was liked, decrement like count
               if (prevPost.is_liked) {
                 updatedCount.liked_by = Math.max(0, updatedCount.liked_by - 1);
               }
@@ -139,7 +132,6 @@ export const PostCard = ({
                 is_liked: false,
               };
             case "repost":
-              // Increment repost count
               updatedCount.reposted_by += 1;
 
               return {
@@ -148,7 +140,6 @@ export const PostCard = ({
                 is_reposted: true,
               };
             case "save":
-              // Increment save count
               updatedCount.saved_by += 1;
 
               return {
@@ -193,7 +184,7 @@ export const PostCard = ({
             <p className="text-sm text-foreground-500">
               Reply{" "}
               <Link
-                href={`/user/${post.parent.author.username}/post/${post.parent.id}`}
+                href={`/user/${post.parent.author.username}/posts/${post.parent.id}`}
                 className="text-primary"
               >
                 @{post.parent.author.username}
@@ -201,13 +192,11 @@ export const PostCard = ({
             </p>
           )}
 
-          <Link href={`/user/${author.username}/post/${post.id}`}>
-            <p className="text-sm whitespace-pre-line break-words">{content}</p>
-          </Link>
+          <p className="text-sm whitespace-pre-line break-words">{content}</p>
 
           <div className="flex justify-between w-3/4 mt-4">
             <Link
-              href={`/user/${author.username}/post/${post.id}`}
+              href={`/user/${author.username}/posts/${post.id}`}
               className="flex items-center gap-1 text-foreground-500 hover:text-primary"
             >
               <MessagesSquare size={16} />

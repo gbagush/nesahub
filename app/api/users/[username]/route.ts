@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -7,10 +8,10 @@ export async function GET(
 ) {
   try {
     const username = (await params).username;
+    const { userId: clerkId } = await auth();
+
     const user = await db.user.findUnique({
-      where: {
-        username: username,
-      },
+      where: { username },
       select: {
         id: true,
         first_name: true,
@@ -25,13 +26,39 @@ export async function GET(
             posts: true,
           },
         },
+        followers:
+          clerkId !== null
+            ? {
+                where: {
+                  clerk_id: clerkId,
+                },
+                select: {
+                  id: true,
+                },
+              }
+            : false,
       },
     });
+
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
-    return NextResponse.json(user);
+
+    const { followers, ...rest } = user;
+    const is_followed = Array.isArray(followers) && followers.length > 0;
+
+    return NextResponse.json(
+      {
+        message: "Success getting user data",
+        data: {
+          ...rest,
+          is_followed,
+        },
+      },
+      { status: 200 }
+    );
   } catch (error) {
+    console.error("Error fetching user profile:", error);
     return NextResponse.json(
       { message: "Internal server error." },
       { status: 500 }
