@@ -4,6 +4,7 @@ import axios from "axios";
 import { format } from "date-fns";
 import { useUser } from "@clerk/nextjs";
 import { useEffect, useState } from "react";
+import { useInView } from "react-intersection-observer";
 
 import { addToast } from "@heroui/toast";
 
@@ -19,6 +20,8 @@ import type { User } from "@/types/user";
 import type { Post } from "@/types/post";
 import { NavTab } from "../commons/navigations/social/tab";
 import Link from "next/link";
+
+const LIMIT = 10;
 
 export const UserProfilePage = ({
   username,
@@ -185,13 +188,27 @@ export const UserProfileHeader = ({
 };
 
 export const UserPosts = ({ userData }: { userData: User }) => {
-  const [userPosts, setUserPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const fetchUserPosts = async () => {
+  const { ref, inView } = useInView();
+
+  const fetchPosts = async (currentPage: number) => {
     try {
-      const response = await axios.get(`/api/users/${userData.username}/posts`);
-      setUserPosts(response.data?.data || []);
+      const response = await axios.get(
+        `/api/users/${userData.username}/posts?page=${currentPage}&limit=${LIMIT}`
+      );
+      const newPosts: Post[] = response.data?.data || [];
+
+      setPosts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const filtered = newPosts.filter((p) => !existingIds.has(p.id));
+        return [...prev, ...filtered];
+      });
+
+      if (newPosts.length < LIMIT) setHasMore(false);
     } catch (error) {
       addToast({
         title: "Error",
@@ -204,36 +221,63 @@ export const UserPosts = ({ userData }: { userData: User }) => {
   };
 
   useEffect(() => {
-    fetchUserPosts();
+    setPosts([]);
+    setPage(1);
+    setHasMore(true);
   }, [userData.username]);
+
+  useEffect(() => {
+    if (hasMore) fetchPosts(page);
+  }, [page]);
+
+  useEffect(() => {
+    if (inView && !loading && hasMore) {
+      setPage((prev) => prev + 1);
+    }
+  }, [inView, loading, hasMore]);
 
   return (
     <>
+      {posts.map((post) => (
+        <PostCard key={post.id} post={post} />
+      ))}
+
       {loading && <Spinner className="py-4" />}
-      {!loading &&
-        userPosts.length > 0 &&
-        userPosts.map((post) => <PostCard key={post.id} post={post} />)}
-      {!loading && userPosts.length === 0 && (
-        <span className="text-center py-">No posts found</span>
+      {!loading && posts.length === 0 && (
+        <span className="text-center block py-4">No posts found</span>
       )}
+
+      <div ref={ref} className="h-8" />
     </>
   );
 };
 
 export const UserReposts = ({ userData }: { userData: User }) => {
-  const [userPosts, setUserPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const fetchUserPosts = async () => {
+  const { ref, inView } = useInView();
+
+  const fetchReposts = async (currentPage: number) => {
     try {
       const response = await axios.get(
-        `/api/users/${userData.username}/reposts`
+        `/api/users/${userData.username}/reposts?page=${currentPage}&limit=${LIMIT}`
       );
-      setUserPosts(response.data?.data || []);
+      const newPosts: Post[] = response.data?.data || [];
+
+      setPosts((prev) => {
+        const existingIds = new Set(prev.map((p) => p.id));
+        const filtered = newPosts.filter((p) => !existingIds.has(p.id));
+        return [...prev, ...filtered];
+      });
+
+      if (newPosts.length < LIMIT) setHasMore(false);
     } catch (error) {
       addToast({
         title: "Error",
-        description: "Failed to fetch user posts",
+        description: "Failed to fetch user reposts",
         color: "danger",
       });
     } finally {
@@ -242,18 +286,36 @@ export const UserReposts = ({ userData }: { userData: User }) => {
   };
 
   useEffect(() => {
-    fetchUserPosts();
+    setPosts([]);
+    setPage(1);
+    setHasMore(true);
   }, [userData.username]);
+
+  useEffect(() => {
+    if (hasMore) {
+      setLoading(true);
+      fetchReposts(page);
+    }
+  }, [page]);
+
+  useEffect(() => {
+    if (inView && !loading && hasMore) {
+      setPage((prev) => prev + 1);
+    }
+  }, [inView, loading, hasMore]);
 
   return (
     <>
+      {posts.map((post) => (
+        <PostCard key={post.id} post={post} />
+      ))}
+
       {loading && <Spinner className="py-4" />}
-      {!loading &&
-        userPosts.length > 0 &&
-        userPosts.map((post) => <PostCard key={post.id} post={post} />)}
-      {!loading && userPosts.length === 0 && (
-        <span className="text-center py-">No posts found</span>
+      {!loading && posts.length === 0 && (
+        <span className="text-center block py-4">No reposts found</span>
       )}
+
+      <div ref={ref} className="h-8" />
     </>
   );
 };

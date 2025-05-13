@@ -3,7 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  _: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ username: string }> }
 ) {
   try {
@@ -20,11 +20,14 @@ export async function GET(
       internalUserId = user?.id ?? null;
     }
 
-    if (!internalUserId) {
-      return NextResponse.json({ message: "User not found." }, { status: 404 });
-    }
+    const searchParams = request.nextUrl.searchParams;
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const skip = (page - 1) * limit;
 
     const posts = await db.post.findMany({
+      skip,
+      take: limit,
       where: {
         author: {
           username,
@@ -105,6 +108,10 @@ export async function GET(
     return NextResponse.json({
       message: "Posts fetched successfully",
       data: posts,
+      meta: {
+        page,
+        limit,
+      },
     });
   } catch (error) {
     console.log("Error: Error while fetching posts:", error);

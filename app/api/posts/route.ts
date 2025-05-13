@@ -66,6 +66,7 @@ export async function POST(request: NextRequest) {
             profile_pict: user.profile_pict,
           },
           _count: {
+            replies: 0,
             liked_by: 0,
             disliked_by: 0,
             reposted_by: 0,
@@ -85,7 +86,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { userId } = await auth();
 
@@ -99,7 +100,31 @@ export async function GET() {
       internalUserId = user?.id ?? null;
     }
 
+    const searchParams = request.nextUrl.searchParams;
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const following = searchParams.get("following") === "true";
+    const skip = (page - 1) * limit;
+
+    let followedIds: number[] = [];
+
+    if (following && internalUserId) {
+      const currentUser = await db.user.findUnique({
+        where: { id: internalUserId },
+        select: {
+          following: {
+            select: { id: true },
+          },
+        },
+      });
+
+      followedIds = currentUser?.following.map((u) => u.id) || [];
+    }
+
     const posts = await db.post.findMany({
+      where: following ? { author: { id: { in: followedIds } } } : {},
+      skip,
+      take: limit,
       include: {
         parent: {
           include: {
@@ -175,6 +200,10 @@ export async function GET() {
     return NextResponse.json({
       message: "Posts fetched successfully",
       data: posts,
+      meta: {
+        page,
+        limit,
+      },
     });
   } catch (error) {
     console.log("Error: Error while fetching posts:", error);

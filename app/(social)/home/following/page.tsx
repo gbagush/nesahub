@@ -29,7 +29,7 @@ export default function Home() {
     try {
       setLoading(true);
       const response = await axios.get(
-        `/api/posts?page=${currentPage}&limit=${LIMIT}`
+        `/api/posts?page=${currentPage}&limit=${LIMIT}&following=true`
       );
       const newPosts = response.data.data;
 
