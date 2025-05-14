@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
+import extractHashtags from "@/lib/extractHashtags";
 
 const PostSchema = z.object({
   content: z
@@ -41,9 +42,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "User not found" }, { status: 400 });
     }
 
+    const hashtags = extractHashtags(content)
+
+    const hashtagRecords = await Promise.all(
+      hashtags.map(async (tag) => {
+        return await db.hashtag.upsert({
+          where: { tag },
+          update: {},
+          create: { tag },
+        });
+      })
+    );
+
     const savedPost = await db.post.create({
       data: {
         content,
+        postTags: {
+          create: hashtagRecords.map((hashtag) => ({
+            hashtag: { connect: { id: hashtag.id } },
+          })),
+        },
         author: {
           connect: { id: user.id },
         },
