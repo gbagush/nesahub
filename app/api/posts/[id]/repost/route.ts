@@ -14,26 +14,45 @@ export async function POST(
     }
 
     const postId = Number((await params).id);
+
     const post = await db.post.findUnique({
-      where: {
-        id: postId,
-      },
+      where: { id: postId },
     });
 
     if (!post) {
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
     }
 
-    await db.post.update({
+    const user = await db.user.findUnique({
+      where: { clerk_id: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    const { id: userIdOnly } = user;
+
+    const existingRepost = await db.postRepost.findUnique({
       where: {
-        id: postId,
-      },
-      data: {
-        reposted_by: {
-          connect: {
-            clerk_id: userId,
-          },
+        postId_userId: {
+          postId,
+          userId: userIdOnly,
         },
+      },
+    });
+
+    if (existingRepost) {
+      return NextResponse.json(
+        { message: "You've already reposted this post" },
+        { status: 400 }
+      );
+    }
+
+    await db.postRepost.create({
+      data: {
+        postId,
+        userId: userIdOnly,
       },
     });
 
@@ -42,6 +61,7 @@ export async function POST(
       { status: 200 }
     );
   } catch (err) {
+    console.error("Repost error:", err);
     return NextResponse.json(
       { message: "Internal server error." },
       { status: 500 }
@@ -61,26 +81,21 @@ export async function DELETE(
     }
 
     const postId = Number((await params).id);
-    const post = await db.post.findUnique({
-      where: {
-        id: postId,
-      },
+
+    const user = await db.user.findUnique({
+      where: { clerk_id: userId },
     });
 
-    if (!post) {
-      return NextResponse.json({ message: "Post not found" }, { status: 404 });
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    await db.post.update({
+    const { id: userIdOnly } = user;
+
+    await db.postRepost.deleteMany({
       where: {
-        id: postId,
-      },
-      data: {
-        reposted_by: {
-          disconnect: {
-            clerk_id: userId,
-          },
-        },
+        postId,
+        userId: userIdOnly,
       },
     });
 
@@ -89,6 +104,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (err) {
+    console.error("Unrepost error:", err);
     return NextResponse.json(
       { message: "Internal server error." },
       { status: 500 }

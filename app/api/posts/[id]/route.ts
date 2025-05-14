@@ -30,6 +30,7 @@ export async function GET(
     }
 
     const postId = (await params).id;
+
     const post = await db.post.findUnique({
       where: {
         id: Number(postId),
@@ -68,26 +69,26 @@ export async function GET(
         },
         liked_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
         disliked_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
         reposted_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
         saved_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
       },

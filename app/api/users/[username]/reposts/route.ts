@@ -25,14 +25,37 @@ export async function GET(
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const skip = (page - 1) * limit;
 
-    const posts = await db.post.findMany({
+    const repostRelations = await db.postRepost.findMany({
+      where: {
+        user: {
+          username,
+        },
+      },
+      orderBy: {
+        created_at: "desc",
+      },
       skip,
       take: limit,
+      select: {
+        postId: true,
+        created_at: true,
+      },
+    });
+
+    const postIds = repostRelations.map((relation) => relation.postId);
+
+    const repostTimeMap = repostRelations.reduce(
+      (acc, { postId, created_at }) => {
+        acc[postId] = created_at;
+        return acc;
+      },
+      {} as Record<number, Date>
+    );
+
+    const posts = await db.post.findMany({
       where: {
-        reposted_by: {
-          some: {
-            username,
-          },
+        id: {
+          in: postIds,
         },
       },
       include: {
@@ -69,37 +92,43 @@ export async function GET(
         },
         liked_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
         disliked_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
         reposted_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
         saved_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
       },
-      orderBy: { created_at: "desc" },
     });
 
-    for (const post of posts as any[]) {
+    const orderedPosts = [...posts].sort((a, b) => {
+      const timeA = repostTimeMap[a.id].getTime();
+      const timeB = repostTimeMap[b.id].getTime();
+      return timeB - timeA;
+    });
+
+    for (const post of orderedPosts as any[]) {
       post.is_liked = post.liked_by?.length > 0;
       post.is_disliked = post.disliked_by?.length > 0;
       post.is_reposted = post.reposted_by?.length > 0;
       post.is_saved = post.saved_by?.length > 0;
+      post.reposted_at = repostTimeMap[post.id];
 
       delete post.liked_by;
       delete post.disliked_by;
@@ -109,7 +138,7 @@ export async function GET(
 
     return NextResponse.json({
       message: "Posts fetched successfully",
-      data: posts,
+      data: orderedPosts,
       meta: {
         page,
         limit,

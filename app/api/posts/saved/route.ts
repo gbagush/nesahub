@@ -15,12 +15,35 @@ export async function GET(_: NextRequest) {
       select: { id: true },
     });
 
+    const savedPostRelations = await db.postSave.findMany({
+      where: {
+        user: {
+          clerk_id: userId,
+        },
+      },
+      orderBy: {
+        created_at: "desc",
+      },
+      select: {
+        postId: true,
+        created_at: true,
+      },
+    });
+
+    const postIds = savedPostRelations.map((relation) => relation.postId);
+
+    const saveTimeMap = savedPostRelations.reduce(
+      (acc, { postId, created_at }) => {
+        acc[postId] = created_at;
+        return acc;
+      },
+      {} as Record<number, Date>
+    );
+
     const savedPosts = await db.post.findMany({
       where: {
-        saved_by: {
-          some: {
-            clerk_id: userId,
-          },
+        id: {
+          in: postIds,
         },
       },
       include: {
@@ -57,39 +80,43 @@ export async function GET(_: NextRequest) {
         },
         liked_by: user?.id
           ? {
-              where: { id: user?.id },
-              select: { id: true },
+              where: { userId: user.id },
+              select: { userId: true },
             }
           : false,
         disliked_by: user?.id
           ? {
-              where: { id: user?.id },
-              select: { id: true },
+              where: { userId: user.id },
+              select: { userId: true },
             }
           : false,
         reposted_by: user?.id
           ? {
-              where: { id: user?.id },
-              select: { id: true },
+              where: { userId: user.id },
+              select: { userId: true },
             }
           : false,
         saved_by: user?.id
           ? {
-              where: { id: user?.id },
-              select: { id: true },
+              where: { userId: user.id },
+              select: { userId: true },
             }
           : false,
       },
-      orderBy: {
-        created_at: "desc",
-      },
     });
 
-    for (const post of savedPosts as any[]) {
+    const orderedSavedPosts = [...savedPosts].sort((a, b) => {
+      const saveTimeA = saveTimeMap[a.id].getTime();
+      const saveTimeB = saveTimeMap[b.id].getTime();
+      return saveTimeB - saveTimeA;
+    });
+
+    for (const post of orderedSavedPosts as any[]) {
       post.is_liked = post.liked_by?.length > 0;
       post.is_disliked = post.disliked_by?.length > 0;
       post.is_reposted = post.reposted_by?.length > 0;
       post.is_saved = post.saved_by?.length > 0;
+      post.saved_at = saveTimeMap[post.id];
 
       delete post.liked_by;
       delete post.disliked_by;
@@ -98,7 +125,7 @@ export async function GET(_: NextRequest) {
     }
 
     return NextResponse.json(
-      { mesage: "Success getting all saved posts.", data: savedPosts },
+      { mesage: "Success getting all saved posts.", data: orderedSavedPosts },
       { status: 200 }
     );
   } catch (error) {

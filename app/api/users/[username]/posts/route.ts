@@ -67,26 +67,26 @@ export async function GET(
         },
         liked_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
         disliked_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
         reposted_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
         saved_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
       },

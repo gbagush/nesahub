@@ -1,6 +1,6 @@
-import axios from "axios";
-
+import { db } from "@/lib/db";
 import { UserProfilePage } from "@/components/user-profile/user-profile-page";
+import { NotFoundSection } from "@/components/commons/navigations/social/not-found-section";
 
 export default async function UserPage({
   params,
@@ -10,12 +10,26 @@ export default async function UserPage({
   const { username } = await params;
 
   try {
-    const user = await axios.get(
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/users/${username}`
-    );
+    const user = await db.user.findUnique({ where: { username } });
 
-    return <UserProfilePage username={username} />;
+    if (user) {
+      return <UserProfilePage username={username} />;
+    } else {
+      return (
+        <NotFoundSection
+          page="User"
+          title="User not found"
+          description="The user you are looking for does not exist."
+        />
+      );
+    }
   } catch (error) {
-    return <h1>User not found</h1>;
+    return (
+      <NotFoundSection
+        page="User"
+        title="Failed getting user data"
+        description="An error occurred while trying to get the user data."
+      />
+    );
   }
 }

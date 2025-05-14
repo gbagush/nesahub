@@ -2,7 +2,8 @@ import axios from "axios";
 
 import UserPostPage from "@/components/user-post/user-post-page";
 
-import { PostNotFound } from "@/components/user-post/post-not-found";
+import { NotFoundSection } from "@/components/commons/navigations/social/not-found-section";
+import { db } from "@/lib/db";
 
 export default async function PostPage({
   params,
@@ -14,18 +15,30 @@ export default async function PostPage({
   const numericPostId = Number(postId);
 
   try {
-    const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_APP_URL}/api/posts/${numericPostId}`
-    );
+    const post = await db.post.findUnique({
+      where: { id: numericPostId },
+      include: {
+        author: true,
+      },
+    });
 
-    const post = response.data?.data;
-
-    if (!post) return <PostNotFound />;
-
-    if (post.author.username !== username) return <PostNotFound />;
+    if (!post || post.author.username !== username)
+      return (
+        <NotFoundSection
+          page="Post"
+          title="Post not found"
+          description="The post you are looking for does not exist or is not authored by this user."
+        />
+      );
 
     return <UserPostPage username={username} postId={numericPostId} />;
   } catch (error) {
-    return <PostNotFound />;
+    return (
+      <NotFoundSection
+        page="Post"
+        title="Error getting post data"
+        description="An error occurred while trying to get the post data."
+      />
+    );
   }
 }

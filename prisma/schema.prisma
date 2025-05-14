@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,48 +8,88 @@ datasource db {
 }
 
 model User {
-  id            Int       @id @default(autoincrement())
-  clerk_id      String    @unique
+  id            Int            @id @default(autoincrement())
+  clerk_id      String         @unique
   first_name    String
   last_name     String
-  username      String    @unique
-  email         String    @unique
+  username      String         @unique
+  email         String         @unique
   profile_pict  String
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
   banned_until  DateTime?
   deleted_at    DateTime?
 
-  posts         Post[]    @relation("UserPosts")
-  liked_post    Post[]    @relation("PostLikes")
-  disliked_post Post[]    @relation("PostDislikes")
-  reposts       Post[]    @relation("PostReposts")
-  saved_posts   Post[]    @relation("PostSaves")
+  posts         Post[]         @relation("UserPosts")
+  liked_post    PostLike[]     @relation("UserToPostLikes")
+  disliked_post PostDislike[]  @relation("UserToPostDislikes")
+  reposts       PostRepost[]   @relation("UserToPostReposts")
+  saved_posts   PostSave[]     @relation("UserToPostSaves")
 
-  following     User[]    @relation("UserFollows")
-  followers     User[]    @relation("UserFollows")
+  following     User[]         @relation("UserFollows")
+  followers     User[]         @relation("UserFollows")
 
   @@map("users")
 }
 
 model Post {
-  id            Int       @id @default(autoincrement())
-  content       String    @db.Text
-  created_at    DateTime  @default(now())
-  updated_at    DateTime  @updatedAt
+  id            Int            @id @default(autoincrement())
+  content       String         @db.Text
+  created_at    DateTime       @default(now())
+  updated_at    DateTime       @updatedAt
   deleted_at    DateTime?
 
   user_id       Int
-  author        User      @relation("UserPosts", fields: [user_id], references: [id])
+  author        User           @relation("UserPosts", fields: [user_id], references: [id])
 
   parent_id     Int?
-  parent        Post?     @relation("PostReplies", fields: [parent_id], references: [id])
-  replies       Post[]    @relation("PostReplies")
+  parent        Post?          @relation("PostReplies", fields: [parent_id], references: [id])
+  replies       Post[]         @relation("PostReplies")
 
-  liked_by      User[]    @relation("PostLikes")
-  disliked_by   User[]    @relation("PostDislikes")
-  reposted_by   User[]    @relation("PostReposts")
-  saved_by      User[]    @relation("PostSaves")
+  liked_by      PostLike[]     @relation("PostToUserLikes")
+  disliked_by   PostDislike[]  @relation("PostToUserDislikes")
+  reposted_by   PostRepost[]   @relation("PostToUserReposts")
+  saved_by      PostSave[]     @relation("PostToUserSaves")
 
   @@map("posts")
+}
+
+model PostLike {
+  post       Post     @relation("PostToUserLikes", fields: [postId], references: [id])
+  postId     Int
+  user       User     @relation("UserToPostLikes", fields: [userId], references: [id])
+  userId     Int
+  created_at DateTime @default(now())
+
+  @@id([postId, userId])
+}
+
+model PostDislike {
+  post       Post     @relation("PostToUserDislikes", fields: [postId], references: [id])
+  postId     Int
+  user       User     @relation("UserToPostDislikes", fields: [userId], references: [id])
+  userId     Int
+  created_at DateTime @default(now())
+
+  @@id([postId, userId])
+}
+
+model PostRepost {
+  post       Post     @relation("PostToUserReposts", fields: [postId], references: [id])
+  postId     Int
+  user       User     @relation("UserToPostReposts", fields: [userId], references: [id])
+  userId     Int
+  created_at DateTime @default(now())
+
+  @@id([postId, userId])
+}
+
+model PostSave {
+  post       Post     @relation("PostToUserSaves", fields: [postId], references: [id])
+  postId     Int
+  user       User     @relation("UserToPostSaves", fields: [userId], references: [id])
+  userId     Int
+  created_at DateTime @default(now())
+
+  @@id([postId, userId])
 }

@@ -23,20 +23,40 @@ export async function POST(
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
     }
 
-    await db.post.update({
-      where: { id: postId },
-      data: {
-        disliked_by: {
-          disconnect: { clerk_id: userId },
+    const user = await db.user.findUnique({
+      where: { clerk_id: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    const { id: userIdOnly } = user;
+
+    await db.postDislike.deleteMany({
+      where: {
+        postId,
+        userId: userIdOnly,
+      },
+    });
+
+    await db.postLike.upsert({
+      where: {
+        postId_userId: {
+          postId,
+          userId: userIdOnly,
         },
-        liked_by: {
-          connect: { clerk_id: userId },
-        },
+      },
+      update: {},
+      create: {
+        postId,
+        userId: userIdOnly,
       },
     });
 
     return NextResponse.json({ message: "Post liked successfully" });
   } catch (error) {
+    console.error("Like error:", error);
     return NextResponse.json(
       { message: "Internal server error." },
       { status: 500 }
@@ -57,18 +77,26 @@ export async function DELETE(
 
     const postId = Number((await params).id);
 
-    await db.post.update({
-      where: { id: postId },
-      data: {
-        liked_by: {
-          disconnect: { clerk_id: userId },
-        },
+    const user = await db.user.findUnique({
+      where: { clerk_id: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    const { id: userIdOnly } = user;
+
+    await db.postLike.deleteMany({
+      where: {
+        postId,
+        userId: userIdOnly,
       },
     });
 
-    return NextResponse.json({ message: "Dislike removed successfully" });
+    return NextResponse.json({ message: "Like removed successfully" });
   } catch (error) {
-    console.error("Undislike error:", error);
+    console.error("Unlike error:", error);
     return NextResponse.json(
       { message: "Internal server error." },
       { status: 500 }

@@ -191,7 +191,7 @@ export const UserPosts = ({ userData }: { userData: User }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const { ref, inView } = useInView();
 
@@ -242,10 +242,11 @@ export const UserPosts = ({ userData }: { userData: User }) => {
         <PostCard key={post.id} post={post} />
       ))}
 
-      {loading && <Spinner className="py-4" />}
       {!loading && posts.length === 0 && (
         <span className="text-center block py-4">No posts found</span>
       )}
+
+      {loading && <Spinner className="py-4" />}
 
       <div ref={ref} className="h-8" />
     </>
@@ -256,7 +257,7 @@ export const UserReposts = ({ userData }: { userData: User }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const { ref, inView } = useInView();
 
@@ -310,10 +311,11 @@ export const UserReposts = ({ userData }: { userData: User }) => {
         <PostCard key={post.id} post={post} />
       ))}
 
-      {loading && <Spinner className="py-4" />}
       {!loading && posts.length === 0 && (
         <span className="text-center block py-4">No reposts found</span>
       )}
+
+      {loading && <Spinner className="py-4" />}
 
       <div ref={ref} className="h-8" />
     </>

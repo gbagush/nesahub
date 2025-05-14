@@ -23,12 +23,36 @@ export async function POST(
       return NextResponse.json({ message: "Post not found" }, { status: 404 });
     }
 
-    await db.post.update({
-      where: { id: postId },
-      data: {
-        saved_by: {
-          connect: { clerk_id: userId },
+    const user = await db.user.findUnique({
+      where: { clerk_id: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+
+    const { id: userIdOnly } = user;
+
+    const existingSave = await db.postSave.findUnique({
+      where: {
+        postId_userId: {
+          postId,
+          userId: userIdOnly,
         },
+      },
+    });
+
+    if (existingSave) {
+      return NextResponse.json(
+        { message: "Post already saved" },
+        { status: 400 }
+      );
+    }
+
+    await db.postSave.create({
+      data: {
+        postId,
+        userId: userIdOnly,
       },
     });
 
@@ -37,6 +61,7 @@ export async function POST(
       { status: 201 }
     );
   } catch (error) {
+    console.error("Save error:", error);
     return NextResponse.json(
       { message: "Internal server error." },
       { status: 500 }
@@ -57,20 +82,20 @@ export async function DELETE(
 
     const postId = Number((await params).id);
 
-    const post = await db.post.findUnique({
-      where: { id: postId },
+    const user = await db.user.findUnique({
+      where: { clerk_id: userId },
     });
 
-    if (!post) {
-      return NextResponse.json({ message: "Post not found" }, { status: 404 });
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    await db.post.update({
-      where: { id: postId },
-      data: {
-        saved_by: {
-          disconnect: { clerk_id: userId },
-        },
+    const { id: userIdOnly } = user;
+
+    await db.postSave.deleteMany({
+      where: {
+        postId,
+        userId: userIdOnly,
       },
     });
 
@@ -79,6 +104,7 @@ export async function DELETE(
       { status: 200 }
     );
   } catch (error) {
+    console.error("Unsave error:", error);
     return NextResponse.json(
       { message: "Internal server error." },
       { status: 500 }

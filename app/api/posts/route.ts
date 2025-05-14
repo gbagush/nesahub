@@ -151,34 +151,34 @@ export async function GET(request: NextRequest) {
         _count: {
           select: {
             replies: true,
-            liked_by: true,
-            disliked_by: true,
-            reposted_by: true,
-            saved_by: true,
+            liked_by: true, // counts PostLike[]
+            disliked_by: true, // counts PostDislike[]
+            reposted_by: true, // counts PostRepost[]
+            saved_by: true, // counts PostSave[]
           },
         },
         liked_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
         disliked_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
         reposted_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
         saved_by: internalUserId
           ? {
-              where: { id: internalUserId },
-              select: { id: true },
+              where: { userId: internalUserId },
+              select: { userId: true },
             }
           : false,
       },
