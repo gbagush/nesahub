@@ -2,6 +2,8 @@ import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
+import { getPosts } from "@/services/post";
+
 import extractHashtags from "@/lib/extractHashtags";
 
 const PostSchema = z.object({
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "User not found" }, { status: 400 });
     }
 
-    const hashtags = extractHashtags(content)
+    const hashtags = extractHashtags(content);
 
     const hashtagRecords = await Promise.all(
       hashtags.map(async (tag) => {
@@ -139,68 +141,11 @@ export async function GET(request: NextRequest) {
       followedIds = currentUser?.following.map((u) => u.id) || [];
     }
 
-    const posts = await db.post.findMany({
+    const posts = await getPosts({
       where: following ? { author: { id: { in: followedIds } } } : {},
+      limit,
       skip,
-      take: limit,
-      include: {
-        parent: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-                username: true,
-                profile_pict: true,
-              },
-            },
-          },
-        },
-        author: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            username: true,
-            profile_pict: true,
-          },
-        },
-        _count: {
-          select: {
-            replies: true,
-            liked_by: true, // counts PostLike[]
-            disliked_by: true, // counts PostDislike[]
-            reposted_by: true, // counts PostRepost[]
-            saved_by: true, // counts PostSave[]
-          },
-        },
-        liked_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-        disliked_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-        reposted_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-        saved_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-      },
-      orderBy: { created_at: "desc" },
+      userId: internalUserId,
     });
 
     for (const post of posts as any[]) {

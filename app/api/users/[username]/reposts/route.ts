@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getPosts } from "@/services/post";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -52,69 +53,15 @@ export async function GET(
       {} as Record<number, Date>
     );
 
-    const posts = await db.post.findMany({
+    const posts = await getPosts({
       where: {
         id: {
           in: postIds,
         },
       },
-      include: {
-        parent: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-                username: true,
-                profile_pict: true,
-              },
-            },
-          },
-        },
-        author: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            username: true,
-            profile_pict: true,
-          },
-        },
-        _count: {
-          select: {
-            replies: true,
-            liked_by: true,
-            disliked_by: true,
-            reposted_by: true,
-            saved_by: true,
-          },
-        },
-        liked_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-        disliked_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-        reposted_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-        saved_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-      },
+      limit,
+      skip,
+      userId: internalUserId,
     });
 
     const orderedPosts = [...posts].sort((a, b) => {

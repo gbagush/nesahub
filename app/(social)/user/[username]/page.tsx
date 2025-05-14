@@ -1,4 +1,5 @@
-import { db } from "@/lib/db";
+import { getUserByUsername } from "@/services/user";
+
 import { UserProfilePage } from "@/components/user-profile/user-profile-page";
 import { NotFoundSection } from "@/components/commons/navigations/social/not-found-section";
 
@@ -10,7 +11,7 @@ export default async function UserPage({
   const { username } = await params;
 
   try {
-    const user = await db.user.findUnique({ where: { username } });
+    const user = await getUserByUsername({ username });
 
     if (user) {
       return <UserProfilePage username={username} />;

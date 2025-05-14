@@ -4,6 +4,7 @@ import UserPostPage from "@/components/user-post/user-post-page";
 
 import { NotFoundSection } from "@/components/commons/navigations/social/not-found-section";
 import { db } from "@/lib/db";
+import { getPost } from "@/services/post";
 
 export default async function PostPage({
   params,
@@ -15,12 +16,7 @@ export default async function PostPage({
   const numericPostId = Number(postId);
 
   try {
-    const post = await db.post.findUnique({
-      where: { id: numericPostId },
-      include: {
-        author: true,
-      },
-    });
+    const post = await getPost({ id: numericPostId });
 
     if (!post || post.author.username !== username)
       return (

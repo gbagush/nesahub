@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { getUserByUsername } from "@/services/user";
 import { UserFollowersPage } from "@/components/user-profile/user-followers-page";
 import { NotFoundSection } from "@/components/commons/navigations/social/not-found-section";
 
@@ -10,7 +10,8 @@ export default async function UserPage({
   const { username } = await params;
 
   try {
-    const user = await db.user.findUnique({ where: { username } });
+    const user = await getUserByUsername({ username });
+
     if (user) {
       return <UserFollowersPage username={username} tab="following" />;
     } else {
