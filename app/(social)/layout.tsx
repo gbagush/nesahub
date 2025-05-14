@@ -1,3 +1,4 @@
+import MobileDock from "@/components/commons/navigations/social/mobile-dock";
 import { Sidebar } from "@/components/commons/navigations/social/sidebar";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
@@ -6,16 +7,18 @@ import { Search } from "lucide-react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen max-w-7xl mx-auto px-4">
+    <div className="flex min-h-screen max-w-7xl mx-auto lg:px-2">
       <aside className="w-1/5 hidden lg:block">
         <Sidebar />
       </aside>
 
-      <div className="flex flex-col w-full lg:w-2/4 border-x border-foreground-100">
+      <div className="flex flex-col w-full lg:w-2/4 lg:border-x lg:border-foreground-100 pb-[72px] lg:pb-0">
         {children}
+
+        <MobileDock />
       </div>
 
-      <aside className="w-1/4 hidden xl:block pl-4">
+      <aside className="w-1/4 hidden lg:block pl-4">
         <div className="sticky top-0 z-20 h-16 bg-background">
           <div className="flex items-center justify-center w-full h-full">
             <Input

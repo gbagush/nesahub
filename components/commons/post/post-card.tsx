@@ -2,6 +2,9 @@
 import axios from "axios";
 import Link from "next/link";
 
+import { useState } from "react";
+
+import { addToast } from "@heroui/toast";
 import { formatDistanceToNow } from "date-fns";
 
 import { Avatar } from "@heroui/avatar";
@@ -15,8 +18,6 @@ import {
 } from "lucide-react";
 
 import type { Post } from "@/types/post";
-import { useState } from "react";
-import { addToast } from "@heroui/toast";
 
 export const PostCard = ({
   post: initialPost,
@@ -170,7 +171,7 @@ export const PostCard = ({
         <div className="flex-1 min-w-0">
           <Link
             href={`/user/${author.username}`}
-            className="flex items-center text-sm break-words"
+            className="flex flex-wrap items-center text-sm break-words"
           >
             <span className="font-semibold">{`${author.first_name} ${author.last_name}`}</span>
             <span className="ml-1 text-foreground-500">@{author.username}</span>
@@ -192,7 +193,9 @@ export const PostCard = ({
             </p>
           )}
 
-          <p className="text-sm whitespace-pre-line break-words">{content}</p>
+          <p className="text-sm whitespace-pre-line break-words">
+            {parseHashtags(content)}
+          </p>
 
           <div className="flex justify-between w-3/4 mt-4">
             <Link
@@ -245,4 +248,24 @@ export const PostCard = ({
       </div>
     </div>
   );
+};
+
+const parseHashtags = (text: string) => {
+  return text.split(/(\s+)/).map((word, index) => {
+    const hashtagMatch = word.match(/^#(\w+)$/);
+    if (hashtagMatch) {
+      const hashtag = hashtagMatch[1];
+      return (
+        <span key={index} className="inline">
+          <Link
+            href={`/posts/hashtag/${hashtag}`}
+            className="text-primary hover:underline"
+          >
+            #{hashtag}
+          </Link>
+        </span>
+      );
+    }
+    return word;
+  });
 };

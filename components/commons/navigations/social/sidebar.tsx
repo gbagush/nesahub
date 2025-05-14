@@ -79,7 +79,7 @@ export const SidebarItem = ({
 
 export const SidebarUserProfile = () => {
   const { isSignedIn, user, isLoaded } = useUser();
-  const { openUserProfile, signOut, openSignIn } = useClerk();
+  const { openUserProfile, signOut } = useClerk();
   const { theme, setTheme } = useTheme();
 
   const onChangeTheme = () => {
