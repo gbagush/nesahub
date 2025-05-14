@@ -45,6 +45,7 @@ model Post {
   parent_id     Int?
   parent        Post?          @relation("PostReplies", fields: [parent_id], references: [id])
   replies       Post[]         @relation("PostReplies")
+  postTags      PostHashtag[]  
 
   liked_by      PostLike[]     @relation("PostToUserLikes")
   disliked_by   PostDislike[]  @relation("PostToUserDislikes")
@@ -52,6 +53,25 @@ model Post {
   saved_by      PostSave[]     @relation("PostToUserSaves")
 
   @@map("posts")
+}
+
+model Hashtag {
+  id    Int    @id @default(autoincrement())
+  tag   String @unique
+  postTags PostHashtag[] 
+  created_at DateTime @default(now())
+}
+
+
+model PostHashtag {
+  postId    Int
+  hashtagId Int
+
+  post      Post    @relation(fields: [postId], references: [id])
+  hashtag   Hashtag @relation(fields: [hashtagId], references: [id])
+  created_at DateTime @default(now())
+
+  @@id([postId, hashtagId]) 
 }
 
 model PostLike {
