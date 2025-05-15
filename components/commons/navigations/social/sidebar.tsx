@@ -25,13 +25,18 @@ import {
 import { User } from "@heroui/user";
 
 import Logo from "@/public/logo.svg";
+import { dark } from "@clerk/themes";
 
 export const Sidebar = () => {
   const { isSignedIn, user } = useUser();
 
   return (
     <nav className="hidden fixed md:flex md:flex-col p-4 h-screen overflow-y-auto">
-      <Image src={Logo} alt="Logo" className="w-12 h-12 mb-4 ml-2" />
+      <Image
+        src={Logo}
+        alt="Logo"
+        className="w-10 h-10 mb-4 ml-2 invert dark:invert-0"
+      />
 
       <div className="flex flex-col gap-2 w-full">
         <SidebarItem icon={<Home size={24} />} title="Home" href="/home" />
@@ -103,7 +108,13 @@ export const SidebarUserProfile = () => {
             <DropdownItem
               key="account"
               startContent={<Settings size={16} />}
-              onPress={() => openUserProfile()}
+              onPress={() =>
+                openUserProfile({
+                  appearance: {
+                    baseTheme: theme === "dark" ? dark : undefined,
+                  },
+                })
+              }
             >
               Account
             </DropdownItem>

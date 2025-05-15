@@ -177,7 +177,7 @@ export const PostCard = ({
             <span className="ml-1 text-foreground-500">@{author.username}</span>
             <Dot className="text-foreground-500" size={20} />
             <span className="ml-1 text-foreground-500">
-              {formatDistanceToNow(new Date(created_at), { addSuffix: true })}
+              {formatDistanceToNow(new Date(created_at))}
             </span>
           </Link>
 

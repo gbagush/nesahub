@@ -100,7 +100,12 @@ export const CreatePostForm = ({
                   <button>
                     <Image size={20} />
                   </button>
-                  <Popover placement="bottom">
+                  <Popover
+                    placement="bottom"
+                    classNames={{
+                      content: "p-0 border-0",
+                    }}
+                  >
                     <PopoverTrigger>
                       <button>
                         <Smile size={20} />
