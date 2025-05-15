@@ -124,6 +124,7 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get("page") || "1", 10);
     const limit = parseInt(searchParams.get("limit") || "10", 10);
     const following = searchParams.get("following") === "true";
+    const keyword = searchParams.get("keyword") || "";
     const skip = (page - 1) * limit;
 
     let followedIds: number[] = [];
@@ -141,8 +142,24 @@ export async function GET(request: NextRequest) {
       followedIds = currentUser?.following.map((u) => u.id) || [];
     }
 
+    const whereClause: any = {};
+
+    if (following) {
+      whereClause.author = {
+        id: {
+          in: followedIds,
+        },
+      };
+    }
+
+    if (keyword.trim() !== "") {
+      whereClause.content = {
+        contains: keyword,
+      };
+    }
+
     const posts = await getPosts({
-      where: following ? { author: { id: { in: followedIds } } } : {},
+      where: whereClause,
       limit,
       skip,
       userId: internalUserId,
