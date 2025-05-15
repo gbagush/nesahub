@@ -19,6 +19,7 @@ import { NavTab } from "../commons/navigations/social/tab";
 import type { User } from "@/types/user";
 import { User as HeroUIUser } from "@heroui/user";
 import Link from "next/link";
+import { NotFoundSection } from "../commons/navigations/social/not-found-section";
 
 export const UserFollowersPage = ({
   username,
@@ -117,7 +118,12 @@ export const UserFollowers = ({ username }: { username: string }) => {
       {loading && <Spinner className="py-4" />}
 
       {!loading && followers.length === 0 && (
-        <span className="py-4">No followers found.</span>
+        <NotFoundSection
+          page="User Followers"
+          title="No Followers Yet"
+          description="This user hasn't gained any followers yet."
+          hideNavbar
+        />
       )}
 
       <div className="flex flex-col gap-4 w-full p-4">
@@ -171,7 +177,12 @@ export const UserFollowing = ({ username }: { username: string }) => {
       {loading && <Spinner className="py-4" />}
 
       {!loading && followers.length === 0 && (
-        <span className="py-4">No following found.</span>
+        <NotFoundSection
+          page="User Following"
+          title="Not Following Anyone"
+          description="This user isn't following anyone yet."
+          hideNavbar
+        />
       )}
 
       <div className="flex flex-col gap-4 w-full p-4">

@@ -20,6 +20,7 @@ import type { User } from "@/types/user";
 import type { Post } from "@/types/post";
 import { NavTab } from "../commons/navigations/social/tab";
 import Link from "next/link";
+import { NotFoundSection } from "../commons/navigations/social/not-found-section";
 
 const LIMIT = 10;
 
@@ -243,7 +244,12 @@ export const UserPosts = ({ userData }: { userData: User }) => {
       ))}
 
       {!loading && posts.length === 0 && (
-        <span className="text-center block py-4">No posts found</span>
+        <NotFoundSection
+          page="User Posts"
+          title="No Posts Yet"
+          description="This user hasn't posted anything yet."
+          hideNavbar
+        />
       )}
 
       {loading && <Spinner className="py-4" />}
@@ -312,7 +318,12 @@ export const UserReposts = ({ userData }: { userData: User }) => {
       ))}
 
       {!loading && posts.length === 0 && (
-        <span className="text-center block py-4">No reposts found</span>
+        <NotFoundSection
+          page="User Reposts"
+          title="No Reposts Yet"
+          description="This user hasn't reposted anything yet."
+          hideNavbar
+        />
       )}
 
       {loading && <Spinner className="py-4" />}

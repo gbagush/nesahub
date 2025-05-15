@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getPosts } from "@/services/post";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -17,7 +18,7 @@ export async function GET(
 
     const tagToSearch = hashtag.startsWith("#") ? hashtag : `#${hashtag}`;
 
-    const posts = await db.post.findMany({
+    const posts = await getPosts({
       where: {
         postTags: {
           some: {
@@ -26,9 +27,6 @@ export async function GET(
             },
           },
         },
-      },
-      include: {
-        author: true,
       },
     });
 

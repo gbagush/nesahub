@@ -10,6 +10,7 @@ import { PostCard } from "@/components/commons/post/post-card";
 import { Navbar } from "@/components/commons/navigations/social/navbar";
 
 import type { Post } from "@/types/post";
+import { NotFoundSection } from "@/components/commons/navigations/social/not-found-section";
 
 export default function SavedPostsPage() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -45,7 +46,12 @@ export default function SavedPostsPage() {
       )}
 
       {posts.length === 0 && !loading && (
-        <p className="text-center text-gray-500 py-4">No posts found.</p>
+        <NotFoundSection
+          page="User Reposts"
+          title="No Reposts Yet"
+          description="This user hasn't reposted anything yet."
+          hideNavbar
+        />
       )}
 
       {posts.length > 0 &&
