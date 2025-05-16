@@ -40,7 +40,11 @@ export const Sidebar = () => {
 
       <div className="flex flex-col gap-2 w-full">
         <SidebarItem icon={<Home size={24} />} title="Home" href="/home" />
-        <SidebarItem icon={<Search size={24} />} title="Explore" href="#" />
+        <SidebarItem
+          icon={<Search size={24} />}
+          title="Explore"
+          href="/search"
+        />
         <SidebarItem
           icon={<Bookmark size={24} />}
           title="Saved Posts"

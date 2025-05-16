@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
 
     if (keyword.trim() !== "") {
       whereClause.OR = [
-        { first_name: { contains: keyword, } },
-        { last_name: { contains: keyword, } },
-        { username: { contains: keyword, } },
+        { first_name: { contains: keyword } },
+        { last_name: { contains: keyword } },
+        { username: { contains: keyword } },
       ];
     }
 
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
     if (internalUserId) {
       const currentUser = await getUserByIdForFollowing({
         id: String(internalUserId),
-      })
+      });
 
       followedIds = currentUser?.following.map((u) => u.id) || [];
     }
@@ -50,14 +50,17 @@ export async function GET(request: NextRequest) {
       where: whereClause,
       limit,
       skip,
-    })
+    });
 
     const usersWithFollowStatus = users.map((user) => ({
       ...user,
       is_followed: followedIds.includes(user.id),
     }));
 
-    return NextResponse.json({ users: usersWithFollowStatus }, { status: 200 });
+    return NextResponse.json(
+      { message: "Success getting users data", data: usersWithFollowStatus },
+      { status: 200 }
+    );
   } catch (err) {
     return NextResponse.json(
       { message: "Something went wrong" },
