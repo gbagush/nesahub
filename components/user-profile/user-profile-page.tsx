@@ -21,6 +21,7 @@ import type { Post } from "@/types/post";
 import { NavTab } from "../commons/navigations/social/tab";
 import Link from "next/link";
 import { NotFoundSection } from "../commons/navigations/social/not-found-section";
+import { EditProfileModal } from "./edit-profile-modal";
 
 const LIMIT = 10;
 
@@ -131,11 +132,20 @@ export const UserProfileHeader = ({
         />
         <div className="flex w-full justify-between">
           <div>
-            <h2 className="text-2xl font-bold">{`${userData.first_name} ${userData.last_name}`}</h2>
+            <h2 className="text-2xl font-bold">
+              {`${userData.first_name} ${userData.last_name}`}{" "}
+              <span className="font-normal text-sm text-foreground-500">
+                {userData.gender === "MALE"
+                  ? "He/Him"
+                  : userData.gender === "FEMALE"
+                    ? "She/Her"
+                    : ""}
+              </span>
+            </h2>
             <span className="text-foreground-500">@{userData.username}</span>
           </div>
 
-          {isSignedIn && user.username !== userData.username && (
+          {isSignedIn && user.username !== userData.username ? (
             <div className="flex gap-2 items-center">
               <Button variant="ghost" radius="full" isIconOnly>
                 <EllipsisVertical size={16} />
@@ -149,8 +159,15 @@ export const UserProfileHeader = ({
                 {userData.is_followed ? "Unfollow" : "Follow"}
               </Button>
             </div>
+          ) : (
+            <EditProfileModal user={userData} />
           )}
         </div>
+        {userData.bio && (
+          <p className="mt-4 text-sm whitespace-pre-line break-words">
+            {userData.bio}
+          </p>
+        )}
         <span className="flex gap-2 items-center text-sm text-foreground-500 mt-4">
           <Calendar size={16} /> Joinned{" "}
           {format(new Date(userData.created_at), "MMMM yyyy")}

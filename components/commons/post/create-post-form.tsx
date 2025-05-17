@@ -41,7 +41,6 @@ export const CreatePostForm = ({
   const handleCreatePost = async () => {
     if (content.length < 10 || content.length > 5000) {
       addToast({
-        title: "Error",
         description: "Post must be between 10 and 5000 characters.",
         color: "danger",
       });
@@ -56,7 +55,6 @@ export const CreatePostForm = ({
 
       if (response.status === 201) {
         addToast({
-          title: "Success",
           description: "Post created successfully.",
           color: "success",
         });
@@ -65,11 +63,8 @@ export const CreatePostForm = ({
 
       onNewPost(response.data.data);
     } catch (error: any) {
-      const message = error.response?.data?.message || "Failed to create post.";
-
       addToast({
-        title: "Error",
-        description: message,
+        description: error.response?.data?.message || "Failed to create post.",
         color: "danger",
       });
     }

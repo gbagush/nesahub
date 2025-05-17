@@ -9,6 +9,7 @@ import { Button } from "@heroui/button";
 import { User as HeroUIUser } from "@heroui/user";
 
 import type { User } from "@/types/user";
+import { Avatar } from "@heroui/avatar";
 
 export const UserCard = ({ user: intitalUser }: { user: User }) => {
   const [user, setUser] = useState<User>(intitalUser);
@@ -32,15 +33,21 @@ export const UserCard = ({ user: intitalUser }: { user: User }) => {
   };
 
   return (
-    <div className="flex items-center w-full justify-between">
+    <div className="flex items-start w-full justify-between">
       <Link href={`/user/${user.username}`}>
-        <HeroUIUser
-          avatarProps={{
-            src: user.profile_pict,
-          }}
-          name={`${user.first_name} ${user.last_name}`}
-          description={`@${user.username}`}
-        />
+        <div className="flex gap-2 items-start w-full">
+          <Avatar src={user.profile_pict} />
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between w-full"></div>
+            <span className="text-sm font-semibold">{`${user.first_name} ${user.last_name}`}</span>
+            <span className="text-sm text-foreground-500">
+              @{user.username}
+            </span>
+            <span className="text-sm mt-1 whitespace-pre-line break-words">
+              {user.bio || ""}
+            </span>
+          </div>
+        </div>
       </Link>
 
       <Button

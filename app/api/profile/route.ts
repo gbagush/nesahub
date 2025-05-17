@@ -3,8 +3,6 @@ import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
-
-
 const allowedFields = ["bio", "gender"];
 const PostSchema = z.object({
   bio: z.string().max(160).optional(),

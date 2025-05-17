@@ -11,6 +11,7 @@
   "dependencies": {
     "@clerk/nextjs": "^6.19.2",
     "@clerk/themes": "^2.2.43",
+    "@heroui/autocomplete": "^2.3.20",
     "@heroui/avatar": "^2.2.15",
     "@heroui/button": "2.2.19",
     "@heroui/code": "2.2.14",
