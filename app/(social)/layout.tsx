@@ -1,4 +1,5 @@
 import MobileDock from "@/components/commons/navigations/social/mobile-dock";
+import { SearchNav } from "@/components/commons/navigations/social/search-nav";
 import { Sidebar } from "@/components/commons/navigations/social/sidebar";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
@@ -19,19 +20,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       </div>
 
       <aside className="w-1/4 hidden lg:block pl-4">
-        <div className="sticky top-0 z-20 h-16 bg-background">
-          <div className="flex items-center justify-center w-full h-full">
-            <Input
-              variant="bordered"
-              radius="full"
-              startContent={<Search size={16} />}
-              placeholder="Search..."
-              classNames={{
-                inputWrapper: "border-1 border-foreground-100",
-              }}
-            />
-          </div>
-        </div>
+        <SearchNav hideBackButton border={false} />
 
         <div className="p-4 rounded-xl border border-foreground-100">
           <h2 className="text-lg font-semibold mb-4">Who to follow</h2>

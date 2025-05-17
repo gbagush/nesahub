@@ -145,7 +145,7 @@ export const UserProfileHeader = ({
                 <Mail size={16} />
               </Button>
 
-              <Button variant="solid" radius="full" onPress={handleFollow}>
+              <Button variant="ghost" radius="full" onPress={handleFollow}>
                 {userData.is_followed ? "Unfollow" : "Follow"}
               </Button>
             </div>

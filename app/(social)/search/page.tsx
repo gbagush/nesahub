@@ -16,6 +16,7 @@ import { NotFoundSection } from "@/components/commons/navigations/social/not-fou
 
 import type { Post } from "@/types/post";
 import type { User } from "@/types/user";
+import { UserCard } from "@/components/commons/users/user-card";
 
 const LIMIT = 10;
 
@@ -107,22 +108,25 @@ export default function SearchPage() {
 
   return (
     <>
-      <SearchNav query={query || ""} />
+      <SearchNav
+        query={query || ""}
+        className="p-4 border-y border-foreground-100"
+      />
+      {!query && (
+        <NotFoundSection
+          page="Search"
+          title="Start your search"
+          description="Type something in the search bar to find what you're looking for."
+          hideNavbar
+        />
+      )}
       <section className="flex flex-col items-center justify-center gap-4">
         {users.length > 0 && (
           <div className="flex flex-col w-full p-4 gap-2 items-start border-b border-foreground-100">
             <h2 className="text-xl font-semibold mb-2">People</h2>
 
             {users.map((user) => (
-              <Link href={`/user/${user.username}`} key={user.id}>
-                <HeroUIUser
-                  avatarProps={{
-                    src: user.profile_pict,
-                  }}
-                  name={`${user.first_name} ${user.last_name}`}
-                  description={`@${user.username}`}
-                />
-              </Link>
+              <UserCard user={user} key={user.id} />
             ))}
           </div>
         )}

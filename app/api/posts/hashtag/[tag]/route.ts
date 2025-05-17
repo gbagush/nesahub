@@ -1,4 +1,3 @@
-import { db } from "@/lib/db";
 import { getPosts } from "@/services/post";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -30,7 +29,10 @@ export async function GET(
       },
     });
 
-    return NextResponse.json({ posts }, { status: 200 });
+    return NextResponse.json(
+      { message: "Success getting posts", data: posts },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error fetching posts by hashtag:", error);
     return NextResponse.json(

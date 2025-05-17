@@ -1,25 +1,21 @@
 "use client";
 import axios from "axios";
 
-import { format } from "date-fns";
-import { useUser } from "@clerk/nextjs";
+import { useInView } from "react-intersection-observer";
 import { useEffect, useState } from "react";
 
 import { addToast } from "@heroui/toast";
 
-import { Avatar } from "@heroui/avatar";
-import { Button } from "@heroui/button";
-import { Calendar, EllipsisVertical, Mail } from "lucide-react";
 import { Spinner } from "@heroui/spinner";
 
-import { PostCard } from "../commons/post/post-card";
 import { Navbar } from "../commons/navigations/social/navbar";
 import { NavTab } from "../commons/navigations/social/tab";
+import { NotFoundSection } from "../commons/navigations/social/not-found-section";
+import { UserCard } from "../commons/users/user-card";
 
 import type { User } from "@/types/user";
-import { User as HeroUIUser } from "@heroui/user";
-import Link from "next/link";
-import { NotFoundSection } from "../commons/navigations/social/not-found-section";
+
+const LIMIT = 10;
 
 export const UserFollowersPage = ({
   username,
@@ -77,8 +73,12 @@ export const UserFollowersPage = ({
       <section className="flex flex-col items-center justify-center">
         {userData && (
           <>
-            {tab === "followers" && <UserFollowers username={username} />}
-            {tab === "following" && <UserFollowing username={username} />}
+            {tab === "followers" && (
+              <UserList username={username} listType="followers" />
+            )}
+            {tab === "following" && (
+              <UserList username={username} listType="following" />
+            )}
           </>
         )}
       </section>
@@ -86,22 +86,44 @@ export const UserFollowersPage = ({
   );
 };
 
-export const UserFollowers = ({ username }: { username: string }) => {
-  const [followers, setFollowers] = useState<User[]>([]);
-
+export const UserList = ({
+  username,
+  listType,
+}: {
+  username: string;
+  listType: "followers" | "following";
+}) => {
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useState(1);
 
-  const fetchUserFollowers = async () => {
+  const [ref, inView] = useInView();
+
+  const fetchUsers = async (currentPage = 1) => {
     setLoading(true);
-
     try {
-      const response = await axios.get(`/api/users/${username}/followers`);
+      const endpoint =
+        listType === "followers"
+          ? `/api/users/${username}/followers`
+          : `/api/users/${username}/following`;
 
-      setFollowers(response.data?.data);
+      const response = await axios.get(
+        `${endpoint}?page=${currentPage}&limit=${LIMIT}`
+      );
+      const newData = response.data?.data || [];
+
+      setUsers((prev) => {
+        const existingIds = new Set(prev.map((u) => u.id));
+        const filtered = newData.filter((u: User) => !existingIds.has(u.id));
+        return [...prev, ...filtered];
+      });
+
+      if (newData.length < LIMIT) setHasMore(false);
     } catch (error) {
       addToast({
         title: "Error",
-        description: "Failed to fetch user followers",
+        description: `Failed to fetch user ${listType}`,
         color: "danger",
       });
     } finally {
@@ -110,96 +132,48 @@ export const UserFollowers = ({ username }: { username: string }) => {
   };
 
   useEffect(() => {
-    fetchUserFollowers();
-  }, []);
-
-  return (
-    <>
-      {loading && <Spinner className="py-4" />}
-
-      {!loading && followers.length === 0 && (
-        <NotFoundSection
-          page="User Followers"
-          title="No Followers Yet"
-          description="This user hasn't gained any followers yet."
-          hideNavbar
-        />
-      )}
-
-      <div className="flex flex-col gap-4 w-full p-4">
-        {!loading &&
-          followers.length > 0 &&
-          followers.map((follower) => (
-            <Link href={`/user/${follower.username}`} key={follower.id}>
-              <HeroUIUser
-                avatarProps={{
-                  src: follower.profile_pict,
-                }}
-                name={`${follower.first_name} ${follower.last_name}`}
-                description={`@${follower.username}`}
-              />
-            </Link>
-          ))}
-      </div>
-    </>
-  );
-};
-
-export const UserFollowing = ({ username }: { username: string }) => {
-  const [followers, setFollowers] = useState<User[]>([]);
-
-  const [loading, setLoading] = useState(true);
-
-  const fetchUserFollowing = async () => {
-    setLoading(true);
-
-    try {
-      const response = await axios.get(`/api/users/${username}/following`);
-
-      setFollowers(response.data?.data);
-    } catch (error) {
-      addToast({
-        title: "Error",
-        description: "Failed to fetch user followers",
-        color: "danger",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchUsers(page);
+  }, [page]);
 
   useEffect(() => {
-    fetchUserFollowing();
-  }, []);
+    if (inView && hasMore && !loading) {
+      setPage((prev) => prev + 1);
+    }
+  }, [inView, hasMore, loading]);
+
+  const emptyState = {
+    title:
+      listType === "followers" ? "No Followers Yet" : "Not Following Anyone",
+    description:
+      listType === "followers"
+        ? "This user hasn't gained any followers yet."
+        : "This user isn't following anyone yet.",
+  };
 
   return (
     <>
-      {loading && <Spinner className="py-4" />}
-
-      {!loading && followers.length === 0 && (
+      {!loading && users.length === 0 && (
         <NotFoundSection
-          page="User Following"
-          title="Not Following Anyone"
-          description="This user isn't following anyone yet."
+          page={`User ${listType.charAt(0).toUpperCase() + listType.slice(1)}`}
+          title={emptyState.title}
+          description={emptyState.description}
           hideNavbar
         />
       )}
 
       <div className="flex flex-col gap-4 w-full p-4">
-        {!loading &&
-          followers.length > 0 &&
-          followers.map((follower) => (
-            <Link href={`/user/${follower.username}`} key={follower.id}>
-              <HeroUIUser
-                avatarProps={{
-                  src: follower.profile_pict,
-                }}
-                name={`${follower.first_name} ${follower.last_name}`}
-                description={`@${follower.username}`}
-              />
-            </Link>
-          ))}
+        {users.map((user) => (
+          <UserCard user={user} key={user.id} />
+        ))}
       </div>
+
+      {loading && (
+        <div className="flex w-full h-24 items-center justify-center">
+          <Spinner />
+        </div>
+      )}
+
+      {!loading && hasMore && <div ref={ref} className="h-10 w-full" />}
     </>
   );
 };

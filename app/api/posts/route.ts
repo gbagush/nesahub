@@ -5,6 +5,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getPosts } from "@/services/post";
 
 import extractHashtags from "@/lib/extractHashtags";
+import { containsBadWord } from "@/lib/badWordsChecker/main";
+import { getUserByClerkId } from "@/services/user";
 
 const PostSchema = z.object({
   content: z
@@ -42,6 +44,16 @@ export async function POST(request: NextRequest) {
 
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 400 });
+    }
+
+    if (containsBadWord(content)) {
+      return NextResponse.json(
+        {
+          message:
+            "Your content contains words that are not allowed. Please review and adjust your submission.",
+        },
+        { status: 400 }
+      );
     }
 
     const hashtags = extractHashtags(content);
@@ -113,10 +125,7 @@ export async function GET(request: NextRequest) {
     let internalUserId: number | null = null;
 
     if (userId) {
-      const user = await db.user.findUnique({
-        where: { clerk_id: userId },
-        select: { id: true },
-      });
+      const user = await getUserByClerkId({ clerk_id: userId });
       internalUserId = user?.id ?? null;
     }
 
@@ -153,9 +162,22 @@ export async function GET(request: NextRequest) {
     }
 
     if (keyword.trim() !== "") {
-      whereClause.content = {
-        contains: keyword,
-      };
+      whereClause.OR = [
+        {
+          content: {
+            contains: keyword,
+          },
+        },
+        {
+          author: {
+            OR: [
+              { first_name: { contains: keyword } },
+              { last_name: { contains: keyword } },
+              { username: { contains: keyword } },
+            ],
+          },
+        },
+      ];
     }
 
     const posts = await getPosts({

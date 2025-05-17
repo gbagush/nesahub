@@ -1,13 +1,28 @@
-import { db } from "@/lib/db";
+import { auth } from "@clerk/nextjs/server";
+import { getUserByClerkId, getUsers } from "@/services/user";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  _: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ username: string }> }
 ) {
   try {
+    const { userId } = await auth();
+
+    const searchParams = request.nextUrl.searchParams;
+    const page = parseInt(searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "10", 10);
+    const skip = (page - 1) * limit;
+
+    let internalUserId: number | null = null;
+
+    if (userId) {
+      const user = await getUserByClerkId({ clerk_id: userId });
+      internalUserId = user?.id ?? null;
+    }
+
     const userUsername = (await params).username;
-    const followers = await db.user.findMany({
+    const followers = await getUsers({
       where: {
         following: {
           some: {
@@ -15,15 +30,9 @@ export async function GET(
           },
         },
       },
-      include: {
-        _count: {
-          select: {
-            followers: true,
-            following: true,
-            posts: true,
-          },
-        },
-      },
+      limit: limit,
+      skip: skip,
+      userId: internalUserId ? internalUserId : undefined,
     });
 
     return NextResponse.json({

@@ -1,5 +1,13 @@
 import { db } from "@/lib/db";
 
+export const getUserByClerkId = async ({ clerk_id }: { clerk_id: string }) => {
+  return await db.user.findUnique({
+    where: {
+      clerk_id: clerk_id,
+    },
+  });
+};
+
 export const getUserByUsername = async ({ username }: { username: string }) => {
   return await db.user.findUnique({
     where: {
@@ -7,6 +15,7 @@ export const getUserByUsername = async ({ username }: { username: string }) => {
     },
   });
 };
+
 export const getUserByIdForFollowing = async ({ id }: { id: string }) => {
   return await db.user.findUnique({
     where: { id: Number(id) },
@@ -18,17 +27,18 @@ export const getUserByIdForFollowing = async ({ id }: { id: string }) => {
   });
 };
 
-
-export const getUsers = async({
+export const getUsers = async ({
   where,
   limit,
   skip,
+  userId,
 }: {
   where: any;
   limit?: number;
   skip?: number;
+  userId?: number;
 }) => {
-  return await db.user.findMany({
+  const users = await db.user.findMany({
     where: where,
     take: limit,
     skip,
@@ -47,6 +57,27 @@ export const getUsers = async({
           posts: true,
         },
       },
+
+      followers:
+        userId !== null
+          ? {
+              where: {
+                id: userId,
+              },
+              select: {
+                id: true,
+              },
+            }
+          : false,
     },
   });
-}
+
+  return users.map((user) => {
+    const { followers, ...rest } = user;
+
+    return {
+      ...rest,
+      is_followed: Array.isArray(followers) && followers.length > 0,
+    };
+  });
+};
