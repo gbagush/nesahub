@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getUserByUsername } from "@/services/user";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -18,6 +19,8 @@ export async function GET(
         last_name: true,
         username: true,
         profile_pict: true,
+        bio: true,
+        gender: true,
         created_at: true,
         _count: {
           select: {

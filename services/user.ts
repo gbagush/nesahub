@@ -48,6 +48,8 @@ export const getUsers = async ({
       last_name: true,
       username: true,
       profile_pict: true,
+      bio: true,
+      gender: true,
       created_at: true,
 
       _count: {
