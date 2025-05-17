@@ -1,26 +1,24 @@
 "use client";
 import axios from "axios";
-import Link from "next/link";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useInView } from "react-intersection-observer";
 
 import { addToast } from "@heroui/toast";
 import { PostCard } from "@/components/commons/post/post-card";
-import { User as HeroUIUser } from "@heroui/user";
 import { Spinner } from "@heroui/spinner";
 
 import { SearchNav } from "@/components/commons/navigations/social/search-nav";
 import { NotFoundSection } from "@/components/commons/navigations/social/not-found-section";
+import { UserCard } from "@/components/commons/users/user-card";
 
 import type { Post } from "@/types/post";
 import type { User } from "@/types/user";
-import { UserCard } from "@/components/commons/users/user-card";
 
 const LIMIT = 10;
 
-export default function SearchPage() {
+const SearchPage = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -148,5 +146,13 @@ export default function SearchPage() {
         {!loading && hasMore && <div ref={ref} className="h-10 w-full" />}
       </section>
     </>
+  );
+};
+
+export default function SerachFallback() {
+  return (
+    <Suspense fallback={<Spinner className="py-4" />}>
+      <SearchPage />
+    </Suspense>
   );
 }
