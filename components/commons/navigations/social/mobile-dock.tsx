@@ -30,7 +30,7 @@ export default function MobileDock() {
       <Link href="/home" className="flex flex-col items-center gap-1">
         <Home className="w-5 h-5 " />
       </Link>
-      <Link href="#" className="flex flex-col items-center gap-1">
+      <Link href="/search" className="flex flex-col items-center gap-1">
         <Search className="w-5 h-5 " />
       </Link>
       <Link href="/saved" className="flex flex-col items-center gap-1">
