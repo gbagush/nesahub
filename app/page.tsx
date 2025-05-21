@@ -14,7 +14,7 @@ export default function LandingPage() {
               src={Logo}
               alt="Logo"
               height={180}
-              className="w-auto h-auto lg:h-52 invert dark:invert-0"
+              className="h-32 lg:h-52 invert dark:invert-0"
             />
           </div>
 

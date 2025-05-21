@@ -17,6 +17,7 @@ import { Textarea } from "@heroui/input";
 import { Theme } from "emoji-picker-react";
 
 import type { Post } from "@/types/post";
+import { GifPopover } from "./post-gif-popover";
 
 const EmojiPicker = dynamic(
   () => {
@@ -33,6 +34,7 @@ export const CreatePostForm = ({
   onNewPost: (newPost: Post) => void;
 }) => {
   const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const { user } = useUser();
 
@@ -48,6 +50,8 @@ export const CreatePostForm = ({
     }
 
     try {
+      setLoading(true);
+
       const response = await axios.post("/api/posts", {
         parent_id: parentId,
         content,
@@ -67,6 +71,8 @@ export const CreatePostForm = ({
         description: error.response?.data?.message || "Failed to create post.",
         color: "danger",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -119,13 +125,17 @@ export const CreatePostForm = ({
                       />
                     </PopoverContent>
                   </Popover>
+
+                  <GifPopover />
                 </div>
 
                 <Button
                   className="font-semibold"
                   radius="full"
+                  variant="ghost"
                   isDisabled={content.length < 10 || content.length > 5000}
                   onPress={handleCreatePost}
+                  isLoading={loading}
                 >
                   Post
                 </Button>

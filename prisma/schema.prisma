@@ -47,7 +47,8 @@ model Post {
   parent_id     Int?
   parent        Post?          @relation("PostReplies", fields: [parent_id], references: [id])
   replies       Post[]         @relation("PostReplies")
-  postTags      PostHashtag[]  
+  postTags      PostHashtag[]
+  media         PostMedia[]
 
   liked_by      PostLike[]     @relation("PostToUserLikes")
   disliked_by   PostDislike[]  @relation("PostToUserDislikes")
@@ -55,6 +56,17 @@ model Post {
   saved_by      PostSave[]     @relation("PostToUserSaves")
 
   @@map("posts")
+}
+
+model PostMedia {
+  id         Int         @id @default(autoincrement())
+  post       Post        @relation(fields: [postId], references: [id])
+  postId     Int
+  source     MediaSource
+  path       String
+  created_at DateTime    @default(now())
+
+  @@map("post_media")
 }
 
 enum Gender {
@@ -70,6 +82,10 @@ model Hashtag {
   created_at DateTime @default(now())
 }
 
+enum MediaSource {
+  USERCONTENT
+  GIPHY
+}
 
 model PostHashtag {
   postId    Int

@@ -76,7 +76,7 @@ export const EditProfileModal = ({ user }: { user: User }) => {
                   src={Logo}
                   height={28}
                   alt="Nesahub Logo"
-                  className="mx-auto"
+                  className="mx-auto invert dark:invert-0"
                 />
               </ModalHeader>
               <ModalBody className="mb-16">

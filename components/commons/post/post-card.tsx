@@ -13,6 +13,7 @@ import {
   Dot,
   MessagesSquare,
   Repeat2,
+  Share,
   ThumbsDown,
   ThumbsUp,
 } from "lucide-react";
@@ -194,10 +195,10 @@ export const PostCard = ({
           )}
 
           <p className="text-sm whitespace-pre-line break-words">
-            {parseHashtags(content)}
+            {parseContent(content)}
           </p>
 
-          <div className="flex justify-between w-3/4 mt-4">
+          <div className="flex justify-between mt-4">
             <Link
               href={`/user/${author.username}/posts/${post.id}`}
               className="flex items-center gap-1 text-foreground-500 hover:text-primary"
@@ -243,6 +244,18 @@ export const PostCard = ({
                 {Intl.NumberFormat().format(_count.saved_by)}
               </span>
             </button>
+
+            <button
+              className="text-foreground-500 hover:text-foreground"
+              onClick={() =>
+                navigator.share({
+                  title: "Nesahub",
+                  url: `${process.env.NEXT_PUBLIC_APP_URL}/user/${author.username}/posts/${post.id}`,
+                })
+              }
+            >
+              <Share size={16} />
+            </button>
           </div>
         </div>
       </div>
@@ -250,7 +263,7 @@ export const PostCard = ({
   );
 };
 
-const parseHashtags = (text: string) => {
+const parseContent = (text: string) => {
   return text.split(/(\s+)/).map((word, index) => {
     const hashtagMatch = word.match(/^#(\w+)$/);
     if (hashtagMatch) {
@@ -266,6 +279,38 @@ const parseHashtags = (text: string) => {
         </span>
       );
     }
-    return word;
+
+    const mentionMatch = word.match(/^@(\w+)$/);
+    if (mentionMatch) {
+      const username = mentionMatch[1];
+      return (
+        <span key={index} className="inline">
+          <Link
+            href={`/user/${username}`}
+            className="text-primary hover:underline"
+          >
+            @{username}
+          </Link>
+        </span>
+      );
+    }
+
+    const urlMatch = word.match(/^https?:\/\/[^\s]+$/);
+    if (urlMatch) {
+      return (
+        <span key={index} className="inline">
+          <a
+            href={word}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline"
+          >
+            {word}
+          </a>
+        </span>
+      );
+    }
+
+    return <span key={index}>{word}</span>;
   });
 };

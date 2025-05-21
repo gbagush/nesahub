@@ -15,7 +15,7 @@ export const NotFoundSection = ({
   return (
     <div>
       {!hideNavbar && <Navbar title={page} />}
-      <div className="p-24">
+      <div className="px-12 py-24 md:px-24">
         <h4 className="text-2xl font-bold mb-2">{title}</h4>
         <p className="text-foreground-500">{description}</p>
       </div>
