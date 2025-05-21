@@ -14,6 +14,8 @@ const PostSchema = z.object({
     .min(10, "Content must be at least 10 characters long")
     .max(5000, "Content must be at most 5000 characters long"),
   parent_id: z.number().optional(),
+  giphy: z.string().optional(),
+  media: z.array(z.string()).optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -76,20 +78,37 @@ export async function POST(request: NextRequest) {
             hashtag: { connect: { id: hashtag.id } },
           })),
         },
+        media: parsed.data.media
+          ? {
+              create: parsed.data.media.map((mediaPath) => ({
+                source: "USERCONTENT", // asumsi media dari user, sesuaikan kalau GIPHY
+                path: mediaPath,
+              })),
+            }
+          : undefined,
+        giphy: parsed.data.giphy || null,
         author: {
           connect: { id: user.id },
         },
+
         ...(parent_id && {
           parent: { connect: { id: parent_id } },
         }),
       },
+      include: {
+        media: true,
+      },
     });
-
+    const { giphy, ...rest } = savedPost;
     return NextResponse.json(
       {
         message: "Post created successfully",
         data: {
-          ...savedPost,
+          ...rest,
+          media: [
+            ...savedPost.media.map((m) => ({ source: m.source, path: m.path })),
+            ...(giphy ? [{ source: "GIPHY", path: giphy }] : []),
+          ],
           author: {
             id: user.id,
             first_name: user.first_name,
