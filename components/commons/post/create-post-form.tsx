@@ -10,7 +10,7 @@ import { addToast } from "@heroui/toast";
 
 import { Avatar } from "@heroui/avatar";
 import { Button } from "@heroui/button";
-import { Image, Smile } from "lucide-react";
+import { Image as ImageIcon, Smile, X } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@heroui/popover";
 import { Textarea } from "@heroui/input";
 
@@ -18,6 +18,7 @@ import { Theme } from "emoji-picker-react";
 
 import type { Post } from "@/types/post";
 import { GifPopover } from "./post-gif-popover";
+import Image from "next/image";
 
 const EmojiPicker = dynamic(
   () => {
@@ -35,15 +36,17 @@ export const CreatePostForm = ({
 }) => {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [gif, setGif] = useState("");
 
   const { user } = useUser();
 
   const { theme } = useTheme();
 
   const handleCreatePost = async () => {
-    if (content.length < 10 || content.length > 5000) {
+    if (!gif && (content.length < 10 || content.length > 5000)) {
       addToast({
-        description: "Post must be between 10 and 5000 characters.",
+        description:
+          "Post must have media or content length between 10 and 5000 characters.",
         color: "danger",
       });
       return;
@@ -55,6 +58,7 @@ export const CreatePostForm = ({
       const response = await axios.post("/api/posts", {
         parent_id: parentId,
         content,
+        giphy: gif,
       });
 
       if (response.status === 201) {
@@ -63,6 +67,7 @@ export const CreatePostForm = ({
           color: "success",
         });
         setContent("");
+        setGif("");
       }
 
       onNewPost(response.data.data);
@@ -96,10 +101,38 @@ export const CreatePostForm = ({
                 }}
                 className="mb-4"
               />
+
+              {gif && (
+                <div className="relative inline-block">
+                  <Image
+                    src={gif}
+                    alt="GIF"
+                    width={256}
+                    height={0}
+                    className="h-auto w-64 rounded-lg"
+                    loading="lazy"
+                    unoptimized
+                  />
+                  <button
+                    onClick={() => setGif("")}
+                    className="absolute top-1 right-1 bg-foreground bg-opacity-50 rounded-full p-1 hover:bg-opacity-100 transition"
+                  >
+                    <X size={20} className="text-background" />
+                  </button>
+                  <Image
+                    src="/powered-by-giphy-icon.png"
+                    alt="Powered by GIPHY"
+                    width={60}
+                    height={32}
+                    className="absolute bottom-2 left-2 "
+                  />
+                </div>
+              )}
+
               <div className="flex justify-between">
                 <div className="flex items-center gap-4">
                   <button>
-                    <Image size={20} />
+                    <ImageIcon size={20} />
                   </button>
                   <Popover
                     placement="bottom"
@@ -126,14 +159,16 @@ export const CreatePostForm = ({
                     </PopoverContent>
                   </Popover>
 
-                  <GifPopover />
+                  <GifPopover onSelected={(gif) => setGif(gif)} />
                 </div>
 
                 <Button
                   className="font-semibold"
                   radius="full"
                   variant="ghost"
-                  isDisabled={content.length < 10 || content.length > 5000}
+                  isDisabled={
+                    !gif && (content.length < 10 || content.length > 5000)
+                  }
                   onPress={handleCreatePost}
                   isLoading={loading}
                 >

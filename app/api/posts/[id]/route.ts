@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { getPost } from "@/services/post";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
@@ -31,67 +32,9 @@ export async function GET(
 
     const postId = (await params).id;
 
-    const post = await db.post.findUnique({
-      where: {
-        id: Number(postId),
-      },
-      include: {
-        parent: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-                username: true,
-                profile_pict: true,
-              },
-            },
-          },
-        },
-        author: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            username: true,
-            profile_pict: true,
-          },
-        },
-        _count: {
-          select: {
-            replies: true,
-            liked_by: true,
-            disliked_by: true,
-            reposted_by: true,
-            saved_by: true,
-          },
-        },
-        liked_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-        disliked_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-        reposted_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-        saved_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-      },
+    const post = await getPost({
+      id: parseInt(postId, 10),
+      userId: internalUserId ? internalUserId : undefined,
     });
 
     if (!post) {

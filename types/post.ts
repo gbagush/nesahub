@@ -9,6 +9,7 @@ export interface Post {
   user_id: number;
   parent_id?: number;
   parent?: Post;
+  media?: PostMedia[];
   author: User;
   _count: PostStats;
   is_disliked?: boolean;
@@ -23,4 +24,9 @@ export interface PostStats {
   disliked_by: number;
   reposted_by: number;
   saved_by: number;
+}
+
+export interface PostMedia {
+  source: "USERCONTENT" | "GIPHY";
+  path: string;
 }

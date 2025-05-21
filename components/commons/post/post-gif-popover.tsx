@@ -9,7 +9,11 @@ import { Popover, PopoverTrigger, PopoverContent } from "@heroui/popover";
 import { ImagePlay, Search } from "lucide-react";
 import { Spinner } from "@heroui/spinner";
 
-export const GifPopover = () => {
+export const GifPopover = ({
+  onSelected,
+}: {
+  onSelected: (gif: string) => void;
+}) => {
   const [gifs, setGifs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -40,7 +44,6 @@ export const GifPopover = () => {
     }
   };
 
-  // Split gifs into two arrays for two columns
   const leftColumn = gifs.filter((_, i) => i % 2 === 0);
   const rightColumn = gifs.filter((_, i) => i % 2 !== 0);
 
@@ -74,6 +77,7 @@ export const GifPopover = () => {
                   width={200}
                   height={parseInt(gif.images.fixed_width.height)}
                   className="rounded-lg object-cover"
+                  onClick={() => onSelected(gif.images.original.url)}
                 />
               ))}
             </div>
@@ -87,6 +91,7 @@ export const GifPopover = () => {
                   width={200}
                   height={parseInt(gif.images.fixed_width.height)}
                   className="rounded-lg object-cover"
+                  onClick={() => onSelected(gif.images.original.url)}
                 />
               ))}
             </div>

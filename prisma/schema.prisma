@@ -49,7 +49,6 @@ model Post {
   replies       Post[]         @relation("PostReplies")
   postTags      PostHashtag[]
   media         PostMedia[]
-  giphy         String?
 
   liked_by      PostLike[]     @relation("PostToUserLikes")
   disliked_by   PostDislike[]  @relation("PostToUserDislikes")

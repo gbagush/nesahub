@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 
 import type { Post } from "@/types/post";
+import Image from "next/image";
+import { GifCard } from "./gif-card";
 
 export const PostCard = ({
   post: initialPost,
@@ -197,6 +199,10 @@ export const PostCard = ({
           <p className="text-sm whitespace-pre-line break-words">
             {parseContent(content)}
           </p>
+
+          {post.media?.map((m, i) =>
+            m.source === "GIPHY" ? <GifCard key={i} url={m.path} /> : null
+          )}
 
           <div className="flex justify-between mt-4">
             <Link

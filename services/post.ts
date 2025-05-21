@@ -34,6 +34,12 @@ export const getPost = async ({
           profile_pict: true,
         },
       },
+      media: {
+        select: {
+          source: true,
+          path: true,
+        },
+      },
       _count: {
         select: {
           replies: true,
@@ -76,11 +82,13 @@ export const getPosts = async ({
   limit,
   skip,
   userId,
+  sort = "desc",
 }: {
   where: any;
   limit?: number;
   skip?: number;
   userId?: number | null;
+  sort?: "desc" | "asc";
 }) => {
   return await db.post.findMany({
     where,
@@ -109,13 +117,19 @@ export const getPosts = async ({
           profile_pict: true,
         },
       },
+      media: {
+        select: {
+          source: true,
+          path: true,
+        },
+      },
       _count: {
         select: {
           replies: true,
-          liked_by: true, // counts PostLike[]
-          disliked_by: true, // counts PostDislike[]
-          reposted_by: true, // counts PostRepost[]
-          saved_by: true, // counts PostSave[]
+          liked_by: true,
+          disliked_by: true,
+          reposted_by: true,
+          saved_by: true,
         },
       },
       liked_by: userId
@@ -143,6 +157,6 @@ export const getPosts = async ({
           }
         : false,
     },
-    orderBy: { created_at: "desc" },
+    orderBy: { created_at: sort },
   });
 };

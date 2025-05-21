@@ -8,15 +8,27 @@ import extractHashtags from "@/lib/extractHashtags";
 import { containsBadWord } from "@/lib/badWordsChecker/main";
 import { getUserByClerkId } from "@/services/user";
 
-const PostSchema = z.object({
-  content: z
-    .string()
-    .min(10, "Content must be at least 10 characters long")
-    .max(5000, "Content must be at most 5000 characters long"),
-  parent_id: z.number().optional(),
-  giphy: z.string().optional(),
-  media: z.array(z.string()).optional(),
-});
+export const PostSchema = z
+  .object({
+    content: z
+      .string()
+      .max(5000, "Content must be at most 5000 characters long")
+      .optional(),
+    parent_id: z.number().optional(),
+    giphy: z.string().optional(),
+    media: z.array(z.string()).optional(),
+  })
+  .refine(
+    (data) =>
+      (data.content && data.content.trim().length >= 10) ||
+      (data.giphy && data.giphy.trim() !== "") ||
+      (data.media && data.media.length > 0),
+    {
+      message:
+        "You must provide at least content (min 10 chars), a GIF, or media.",
+      path: ["content"],
+    }
+  );
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,7 +60,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "User not found" }, { status: 400 });
     }
 
-    if (containsBadWord(content)) {
+    if (content && containsBadWord(content)) {
       return NextResponse.json(
         {
           message:
@@ -58,7 +70,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const hashtags = extractHashtags(content);
+    const hashtags = content ? extractHashtags(content) : [];
 
     const hashtagRecords = await Promise.all(
       hashtags.map(async (tag) => {
@@ -72,21 +84,29 @@ export async function POST(request: NextRequest) {
 
     const savedPost = await db.post.create({
       data: {
-        content,
+        content: content || "",
         postTags: {
           create: hashtagRecords.map((hashtag) => ({
             hashtag: { connect: { id: hashtag.id } },
           })),
         },
-        media: parsed.data.media
-          ? {
-              create: parsed.data.media.map((mediaPath) => ({
-                source: "USERCONTENT", // asumsi media dari user, sesuaikan kalau GIPHY
-                path: mediaPath,
-              })),
-            }
-          : undefined,
-        giphy: parsed.data.giphy || null,
+        media: {
+          create: [
+            ...(parsed.data.media?.map((mediaPath) => ({
+              source: "USERCONTENT" as const,
+              path: mediaPath,
+            })) || []),
+
+            ...(parsed.data.giphy
+              ? [
+                  {
+                    source: "GIPHY" as const,
+                    path: parsed.data.giphy,
+                  },
+                ]
+              : []),
+          ],
+        },
         author: {
           connect: { id: user.id },
         },
@@ -99,15 +119,14 @@ export async function POST(request: NextRequest) {
         media: true,
       },
     });
-    const { giphy, ...rest } = savedPost;
+
     return NextResponse.json(
       {
         message: "Post created successfully",
         data: {
-          ...rest,
+          ...savedPost,
           media: [
             ...savedPost.media.map((m) => ({ source: m.source, path: m.path })),
-            ...(giphy ? [{ source: "GIPHY", path: giphy }] : []),
           ],
           author: {
             id: user.id,

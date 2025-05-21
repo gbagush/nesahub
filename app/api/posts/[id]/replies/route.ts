@@ -1,6 +1,7 @@
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { getPosts } from "@/services/post";
 
 export async function GET(
   _: NextRequest,
@@ -20,80 +21,12 @@ export async function GET(
     }
 
     const postId = (await params).id;
-    const replies = await db.post.findMany({
+    const replies = await getPosts({
       where: {
         parent_id: Number(postId),
       },
-      include: {
-        parent: {
-          include: {
-            author: {
-              select: {
-                id: true,
-                first_name: true,
-                last_name: true,
-                username: true,
-                profile_pict: true,
-              },
-            },
-          },
-        },
-        author: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-            username: true,
-            profile_pict: true,
-          },
-        },
-        _count: {
-          select: {
-            replies: true,
-            liked_by: true,
-            disliked_by: true,
-            reposted_by: true,
-            saved_by: true,
-          },
-        },
-        liked_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-        disliked_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-        reposted_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-        saved_by: internalUserId
-          ? {
-              where: { userId: internalUserId },
-              select: { userId: true },
-            }
-          : false,
-      },
+      sort: "asc",
     });
-
-    for (const post of replies as any[]) {
-      post.is_liked = post.liked_by?.length > 0;
-      post.is_disliked = post.disliked_by?.length > 0;
-      post.is_reposted = post.reposted_by?.length > 0;
-      post.is_saved = post.saved_by?.length > 0;
-
-      delete post.liked_by;
-      delete post.disliked_by;
-      delete post.reposted_by;
-      delete post.saved_by;
-    }
 
     return NextResponse.json({
       message: "Replies fetched successfully",
