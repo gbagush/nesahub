@@ -21,6 +21,7 @@ import {
 import type { Post } from "@/types/post";
 import Image from "next/image";
 import { GifCard } from "./gif-card";
+import { MediaCard } from "./media-card";
 
 export const PostCard = ({
   post: initialPost,
@@ -164,6 +165,8 @@ export const PostCard = ({
     }
   };
 
+  const media = post.media ?? [];
+
   return (
     <div className="flex flex-col p-4 gap-4 w-full border-b border-foreground-100">
       <div className="flex gap-2 items-start w-full">
@@ -200,8 +203,22 @@ export const PostCard = ({
             {parseContent(content)}
           </p>
 
-          {post.media?.map((m, i) =>
-            m.source === "GIPHY" ? <GifCard key={i} url={m.path} /> : null
+          {media.length > 0 && (
+            <div
+              className={`py-2 grid gap-2 ${
+                media.length === 1 ? "grid-cols-1" : "grid-cols-2"
+              }`}
+            >
+              {media.map((m, i) => (
+                <MediaCard
+                  key={i}
+                  path={m.path}
+                  source={m.source}
+                  alt={`Post media ${i + 1}`}
+                  span={media.length === 3 && i === 0}
+                />
+              ))}
+            </div>
           )}
 
           <div className="flex justify-between mt-4">

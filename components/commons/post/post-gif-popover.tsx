@@ -78,6 +78,7 @@ export const GifPopover = ({
                   height={parseInt(gif.images.fixed_width.height)}
                   className="rounded-lg object-cover"
                   onClick={() => onSelected(gif.images.original.url)}
+                  unoptimized
                 />
               ))}
             </div>
@@ -92,6 +93,7 @@ export const GifPopover = ({
                   height={parseInt(gif.images.fixed_width.height)}
                   className="rounded-lg object-cover"
                   onClick={() => onSelected(gif.images.original.url)}
+                  unoptimized
                 />
               ))}
             </div>

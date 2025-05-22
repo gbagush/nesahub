@@ -1,59 +1,89 @@
 import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
-import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { getPosts } from "@/services/post";
 
 import extractHashtags from "@/lib/extractHashtags";
 import { containsBadWord } from "@/lib/badWordsChecker/main";
 import { getUserByClerkId } from "@/services/user";
+import { uploadToFtp } from "@/lib/ftp";
 
-export const PostSchema = z
-  .object({
-    content: z
-      .string()
-      .max(5000, "Content must be at most 5000 characters long")
-      .optional(),
-    parent_id: z.number().optional(),
-    giphy: z.string().optional(),
-    media: z.array(z.string()).optional(),
-  })
-  .refine(
-    (data) =>
-      (data.content && data.content.trim().length >= 10) ||
-      (data.giphy && data.giphy.trim() !== "") ||
-      (data.media && data.media.length > 0),
-    {
-      message:
-        "You must provide at least content (min 10 chars), a GIF, or media.",
-      path: ["content"],
-    }
-  );
+const MAX_IMAGES = 3;
+const MAX_IMAGE_SIZE = 1024 * 1024;
+const ALLOWED_IMAGE_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/gif",
+];
 
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await auth();
-
     if (!userId) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const parsed = PostSchema.safeParse(body);
+    const formData = await request.formData();
 
-    if (!parsed.success) {
+    const content = formData.get("content")?.toString() || "";
+    const giphy = formData.get("giphy")?.toString() || "";
+    const parent_id = formData.get("parent_id")
+      ? Number(formData.get("parent_id"))
+      : undefined;
+
+    const mediaFiles = formData.getAll("media") as File[];
+
+    if (
+      content.trim().length < 10 &&
+      (!giphy || giphy.trim() === "") &&
+      mediaFiles.length === 0
+    ) {
       return NextResponse.json(
-        { message: "Invalid request", errors: parsed.error.flatten() },
+        {
+          message:
+            "You must provide at least content (min 10 chars), a GIF, or media.",
+        },
         { status: 400 }
       );
     }
 
-    const { content, parent_id } = parsed.data;
+    if (mediaFiles.length > MAX_IMAGES) {
+      return NextResponse.json(
+        { message: "You can only upload up to 3 images." },
+        { status: 400 }
+      );
+    }
+
+    const savedMedia = [];
+
+    for (const file of mediaFiles) {
+      if (!ALLOWED_IMAGE_TYPES.includes(file.type)) {
+        return NextResponse.json(
+          { message: `Unsupported file type: ${file.type}` },
+          { status: 400 }
+        );
+      }
+
+      if (file.size > MAX_IMAGE_SIZE) {
+        return NextResponse.json(
+          {
+            message: `Image "${file.name}" exceeds the 1MB limit.`,
+          },
+          { status: 400 }
+        );
+      }
+
+      const ftpPath = await uploadToFtp(file);
+      savedMedia.push({
+        source: "USERCONTENT" as const,
+        path: ftpPath,
+      });
+    }
 
     const user = await db.user.findUnique({
-      where: {
-        clerk_id: userId,
-      },
+      where: { clerk_id: userId },
     });
 
     if (!user) {
@@ -73,13 +103,13 @@ export async function POST(request: NextRequest) {
     const hashtags = content ? extractHashtags(content) : [];
 
     const hashtagRecords = await Promise.all(
-      hashtags.map(async (tag) => {
-        return await db.hashtag.upsert({
+      hashtags.map((tag) =>
+        db.hashtag.upsert({
           where: { tag },
           update: {},
           create: { tag },
-        });
-      })
+        })
+      )
     );
 
     const savedPost = await db.post.create({
@@ -92,25 +122,13 @@ export async function POST(request: NextRequest) {
         },
         media: {
           create: [
-            ...(parsed.data.media?.map((mediaPath) => ({
-              source: "USERCONTENT" as const,
-              path: mediaPath,
-            })) || []),
-
-            ...(parsed.data.giphy
-              ? [
-                  {
-                    source: "GIPHY" as const,
-                    path: parsed.data.giphy,
-                  },
-                ]
-              : []),
+            ...savedMedia,
+            ...(giphy ? [{ source: "GIPHY" as const, path: giphy }] : []),
           ],
         },
         author: {
           connect: { id: user.id },
         },
-
         ...(parent_id && {
           parent: { connect: { id: parent_id } },
         }),
@@ -125,9 +143,10 @@ export async function POST(request: NextRequest) {
         message: "Post created successfully",
         data: {
           ...savedPost,
-          media: [
-            ...savedPost.media.map((m) => ({ source: m.source, path: m.path })),
-          ],
+          media: savedPost.media.map((m) => ({
+            source: m.source,
+            path: m.path,
+          })),
           author: {
             id: user.id,
             first_name: user.first_name,
@@ -144,11 +163,10 @@ export async function POST(request: NextRequest) {
           },
         },
       },
-      {
-        status: 201,
-      }
+      { status: 201 }
     );
   } catch (error) {
+    console.error("Post creation failed:", error);
     return NextResponse.json(
       { message: "Internal server error." },
       { status: 500 }

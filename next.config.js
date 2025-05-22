@@ -6,6 +6,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "*.giphy.com",
       },
+      {
+        protocol: "https",
+        hostname: "nhdevcdn.zeth.biz.id",
+      },
     ],
   },
 };
