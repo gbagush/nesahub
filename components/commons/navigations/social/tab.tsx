@@ -15,7 +15,7 @@ export const NavTab = ({
 
   return (
     <div
-      className={`flex w-full h-16 border-b border-foreground-100 ${isSticky ? "sticky top-0 z-10 backdrop-blur-md" : ""}`}
+      className={`flex w-full h-16 border-b border-foreground-100 ${isSticky ? "sticky top-0 z-50 backdrop-blur-md" : ""}`}
     >
       {items.map((item, index) => {
         const isActive = pathname === item.href;

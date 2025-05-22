@@ -41,8 +41,10 @@ model Post {
   updated_at    DateTime       @updatedAt
   deleted_at    DateTime?
 
-  user_id       Int
-  author        User           @relation("UserPosts", fields: [user_id], references: [id])
+  user_id       Int?
+  ai_bot_id     Int?
+  author        User?           @relation("UserPosts", fields: [user_id], references: [id])
+  aiBot         AiBot?         @relation(fields: [ai_bot_id], references: [id])
 
   parent_id     Int?
   parent        Post?          @relation("PostReplies", fields: [parent_id], references: [id])
@@ -58,6 +60,20 @@ model Post {
   @@map("posts")
 }
 
+model AiBot {
+  id            Int      @id @default(autoincrement())
+  name          String
+  username      String   @unique
+  profile_pict  String
+
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  posts       Post[]
+
+  @@map("ai_bots")
+}
+
 model PostMedia {
   id         Int         @id @default(autoincrement())
   post       Post        @relation(fields: [postId], references: [id])
@@ -69,24 +85,12 @@ model PostMedia {
   @@map("post_media")
 }
 
-enum Gender {
-  MALE
-  FEMALE
-  NOT_SET
-}
-
 model Hashtag {
-  id    Int    @id @default(autoincrement())
-  tag   String @unique
-  postTags PostHashtag[] 
-  created_at DateTime @default(now())
+  id         Int            @id @default(autoincrement())
+  tag        String         @unique
+  postTags   PostHashtag[] 
+  created_at DateTime       @default(now())
 }
-
-enum MediaSource {
-  USERCONTENT
-  GIPHY
-}
-
 model PostHashtag {
   postId    Int
   hashtagId Int
@@ -136,4 +140,15 @@ model PostSave {
   created_at DateTime @default(now())
 
   @@id([postId, userId])
+}
+
+enum MediaSource {
+  USERCONTENT
+  GIPHY
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NOT_SET
 }

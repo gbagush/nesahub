@@ -7,6 +7,7 @@ import extractHashtags from "@/lib/extractHashtags";
 import { containsBadWord } from "@/lib/badWordsChecker/main";
 import { getUserByClerkId } from "@/services/user";
 import { uploadToFtp } from "@/lib/ftp";
+import { getOXAResponseAndReply } from "@/lib/oxa-ai";
 
 const MAX_IMAGES = 3;
 const MAX_IMAGE_SIZE = 1024 * 1024;
@@ -137,6 +138,17 @@ export async function POST(request: NextRequest) {
         media: true,
       },
     });
+
+    if (content.toLowerCase().startsWith("@oxa")) {
+      const messageToAI = content.replace(/^@oxa\s*/i, "").trim();
+
+      if (messageToAI.length > 0) {
+        getOXAResponseAndReply({
+          message: messageToAI,
+          postId: savedPost.id,
+        }).catch((e) => console.error("OXA Auto-reply failed:", e));
+      }
+    }
 
     return NextResponse.json(
       {

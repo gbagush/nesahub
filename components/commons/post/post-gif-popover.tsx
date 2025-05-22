@@ -17,18 +17,23 @@ export const GifPopover = ({
   const [gifs, setGifs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
+    if (isOpen) {
+      fetchGifs(searchTerm);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
     const delayDebounce = setTimeout(() => {
       fetchGifs(searchTerm);
     }, 500);
 
     return () => clearTimeout(delayDebounce);
   }, [searchTerm]);
-
-  useEffect(() => {
-    fetchGifs(searchTerm);
-  }, []);
 
   const fetchGifs = async (query: string) => {
     setLoading(true);
@@ -48,7 +53,12 @@ export const GifPopover = ({
   const rightColumn = gifs.filter((_, i) => i % 2 !== 0);
 
   return (
-    <Popover placement="bottom" className="w-72" radius="sm">
+    <Popover
+      placement="bottom"
+      className="w-72"
+      radius="sm"
+      onOpenChange={setIsOpen}
+    >
       <PopoverTrigger>
         <button>
           <ImagePlay size={20} />

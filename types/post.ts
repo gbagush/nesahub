@@ -1,3 +1,4 @@
+import { AiBot } from "./aibot";
 import type { User } from "./user";
 
 export interface Post {
@@ -6,11 +7,13 @@ export interface Post {
   created_at: string;
   updated_at?: string;
   deleted_at?: string;
-  user_id: number;
+  user_id?: number;
+  ai_bot_id?: number;
   parent_id?: number;
   parent?: Post;
   media?: PostMedia[];
-  author: User;
+  author?: User;
+  aiBot?: AiBot;
   _count: PostStats;
   is_disliked?: boolean;
   is_liked?: boolean;

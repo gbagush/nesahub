@@ -14,7 +14,7 @@ export const Navbar = ({
 
   return (
     <div
-      className={`sticky top-0 z-10 flex items-center p-4 h-16 backdrop-blur-md ${isBordered && "border-y border-foreground-100"}`}
+      className={`sticky top-0 z-50 flex items-center p-4 h-16 backdrop-blur-md ${isBordered && "border-y border-foreground-100"}`}
     >
       <Button
         className="flex items-center gap-2 text-foreground"

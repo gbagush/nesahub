@@ -1,15 +1,13 @@
 "use client";
 import axios from "axios";
 import Link from "next/link";
-
 import { useState } from "react";
-
 import { addToast } from "@heroui/toast";
 import { formatDistanceToNow } from "date-fns";
-
 import { Avatar } from "@heroui/avatar";
 import {
   Bookmark,
+  Bot,
   Dot,
   MessagesSquare,
   Repeat2,
@@ -19,8 +17,6 @@ import {
 } from "lucide-react";
 
 import type { Post } from "@/types/post";
-import Image from "next/image";
-import { GifCard } from "./gif-card";
 import { MediaCard } from "./media-card";
 
 export const PostCard = ({
@@ -32,7 +28,7 @@ export const PostCard = ({
 }) => {
   const [post, setPost] = useState<Post>(initialPost);
 
-  const { author, content, created_at, _count } = post;
+  const { author, aiBot, content, created_at, _count } = post;
 
   const handleAction = async (
     action: "like" | "dislike" | "repost" | "save"
@@ -57,66 +53,44 @@ export const PostCard = ({
     try {
       if (isActive) {
         await axios.delete(`/api/posts/${post.id}/${action}`);
-
         setPost((prevPost) => {
           const updatedCount = { ...prevPost._count };
-
           switch (action) {
             case "like":
               updatedCount.liked_by = Math.max(0, updatedCount.liked_by - 1);
-              return {
-                ...prevPost,
-                _count: updatedCount,
-                is_liked: false,
-              };
+              return { ...prevPost, _count: updatedCount, is_liked: false };
             case "dislike":
               updatedCount.disliked_by = Math.max(
                 0,
                 updatedCount.disliked_by - 1
               );
-              return {
-                ...prevPost,
-                _count: updatedCount,
-                is_disliked: false,
-              };
+              return { ...prevPost, _count: updatedCount, is_disliked: false };
             case "repost":
               updatedCount.reposted_by = Math.max(
                 0,
                 updatedCount.reposted_by - 1
               );
-              return {
-                ...prevPost,
-                _count: updatedCount,
-                is_reposted: false,
-              };
+              return { ...prevPost, _count: updatedCount, is_reposted: false };
             case "save":
               updatedCount.saved_by = Math.max(0, updatedCount.saved_by - 1);
-              return {
-                ...prevPost,
-                _count: updatedCount,
-                is_saved: false,
-              };
+              return { ...prevPost, _count: updatedCount, is_saved: false };
             default:
               return prevPost;
           }
         });
       } else {
         await axios.post(`/api/posts/${post.id}/${action}`);
-
         setPost((prevPost) => {
           const updatedCount = { ...prevPost._count };
-
           switch (action) {
             case "like":
               updatedCount.liked_by += 1;
-
               if (prevPost.is_disliked) {
                 updatedCount.disliked_by = Math.max(
                   0,
                   updatedCount.disliked_by - 1
                 );
               }
-
               return {
                 ...prevPost,
                 _count: updatedCount,
@@ -125,11 +99,9 @@ export const PostCard = ({
               };
             case "dislike":
               updatedCount.disliked_by += 1;
-
               if (prevPost.is_liked) {
                 updatedCount.liked_by = Math.max(0, updatedCount.liked_by - 1);
               }
-
               return {
                 ...prevPost,
                 _count: updatedCount,
@@ -138,26 +110,16 @@ export const PostCard = ({
               };
             case "repost":
               updatedCount.reposted_by += 1;
-
-              return {
-                ...prevPost,
-                _count: updatedCount,
-                is_reposted: true,
-              };
+              return { ...prevPost, _count: updatedCount, is_reposted: true };
             case "save":
               updatedCount.saved_by += 1;
-
-              return {
-                ...prevPost,
-                _count: updatedCount,
-                is_saved: true,
-              };
+              return { ...prevPost, _count: updatedCount, is_saved: true };
             default:
               return prevPost;
           }
         });
       }
-    } catch (error) {
+    } catch {
       addToast({
         description: `Failed to ${isActive ? "remove" : "add"} ${action} post.`,
         color: "danger",
@@ -170,24 +132,34 @@ export const PostCard = ({
   return (
     <div className="flex flex-col p-4 gap-4 w-full border-b border-foreground-100">
       <div className="flex gap-2 items-start w-full">
-        <Link href={`/user/${author.username}`}>
-          <Avatar src={author.profile_pict} />
-        </Link>
+        {author && (
+          <Link href={`/user/${author.username}`}>
+            <Avatar src={author.profile_pict} />
+          </Link>
+        )}
+
+        {aiBot && <Avatar src={aiBot.profile_pict} />}
 
         <div className="flex-1 min-w-0">
           <Link
-            href={`/user/${author.username}`}
+            href={author ? `/user/${author.username}` : "#"}
             className="flex flex-wrap items-center text-sm break-words"
           >
-            <span className="font-semibold">{`${author.first_name} ${author.last_name}`}</span>
-            <span className="ml-1 text-foreground-500">@{author.username}</span>
+            <span className="font-semibold">
+              {author && `${author.first_name} ${author.last_name}`}
+              {aiBot && `${aiBot.name}`}
+            </span>
+            <span className="ml-1 text-foreground-500">
+              @{author && author.username}
+              {aiBot && aiBot.username}
+            </span>
             <Dot className="text-foreground-500" size={20} />
             <span className="ml-1 text-foreground-500">
               {formatDistanceToNow(new Date(created_at))}
             </span>
           </Link>
 
-          {!isPostReply && post.parent && (
+          {!isPostReply && post.parent?.author && (
             <p className="text-sm text-foreground-500">
               Reply{" "}
               <Link
@@ -221,16 +193,25 @@ export const PostCard = ({
             </div>
           )}
 
+          {aiBot && (
+            <p className="flex items-center gap-1 text-xs text-foreground-500 mt-1">
+              <Bot size={20} /> AI Generated, always check the facts.
+            </p>
+          )}
+
           <div className="flex justify-between mt-4">
-            <Link
-              href={`/user/${author.username}/posts/${post.id}`}
-              className="flex items-center gap-1 text-foreground-500 hover:text-primary"
-            >
-              <MessagesSquare size={16} />
-              <span className="text-xs">
-                {Intl.NumberFormat().format(_count.replies)}
-              </span>
-            </Link>
+            {author && (
+              <Link
+                href={`/user/${author.username}/posts/${post.id}`}
+                className="flex items-center gap-1 text-foreground-500 hover:text-primary"
+              >
+                <MessagesSquare size={16} />
+                <span className="text-xs">
+                  {Intl.NumberFormat().format(_count.replies)}
+                </span>
+              </Link>
+            )}
+
             <button
               className={`flex items-center gap-1 ${post.is_liked ? "text-red-500" : "text-foreground-500 hover:text-red-500"}`}
               onClick={() => handleAction("like")}
@@ -268,17 +249,19 @@ export const PostCard = ({
               </span>
             </button>
 
-            <button
-              className="text-foreground-500 hover:text-foreground"
-              onClick={() =>
-                navigator.share({
-                  title: "Nesahub",
-                  url: `${process.env.NEXT_PUBLIC_APP_URL}/user/${author.username}/posts/${post.id}`,
-                })
-              }
-            >
-              <Share size={16} />
-            </button>
+            {author && (
+              <button
+                className="text-foreground-500 hover:text-foreground"
+                onClick={() =>
+                  navigator.share?.({
+                    title: "Nesahub",
+                    url: `${process.env.NEXT_PUBLIC_APP_URL}/user/${author.username}/posts/${post.id}`,
+                  })
+                }
+              >
+                <Share size={16} />
+              </button>
+            )}
           </div>
         </div>
       </div>
