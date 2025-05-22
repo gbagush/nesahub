@@ -159,15 +159,24 @@ export const PostCard = ({
             </span>
           </Link>
 
-          {!isPostReply && post.parent?.author && (
+          {!isPostReply && post.parent && (
             <p className="text-sm text-foreground-500">
               Reply{" "}
-              <Link
-                href={`/user/${post.parent.author.username}/posts/${post.parent.id}`}
-                className="text-primary"
-              >
-                @{post.parent.author.username}
-              </Link>
+              {post.parent.author ? (
+                <Link
+                  href={`/user/${post.parent.author.username}/posts/${post.parent.id}`}
+                  className="text-primary"
+                >
+                  @{post.parent.author.username}
+                </Link>
+              ) : post.parent.aiBot ? (
+                <Link
+                  href={`/bot/${post.parent.aiBot.username}/posts/${post.parent.id}`}
+                  className="text-primary"
+                >
+                  @{post.parent.aiBot.username}
+                </Link>
+              ) : null}
             </p>
           )}
 
@@ -200,17 +209,21 @@ export const PostCard = ({
           )}
 
           <div className="flex justify-between mt-4">
-            {author && (
-              <Link
-                href={`/user/${author.username}/posts/${post.id}`}
-                className="flex items-center gap-1 text-foreground-500 hover:text-primary"
-              >
-                <MessagesSquare size={16} />
-                <span className="text-xs">
-                  {Intl.NumberFormat().format(_count.replies)}
-                </span>
-              </Link>
-            )}
+            <Link
+              href={
+                author
+                  ? `/user/${author.username}/posts/${post.id}`
+                  : aiBot
+                    ? `/bot/${aiBot.username}/posts/${post.id}`
+                    : "#"
+              }
+              className="flex items-center gap-1 text-foreground-500 hover:text-primary"
+            >
+              <MessagesSquare size={16} />
+              <span className="text-xs">
+                {Intl.NumberFormat().format(_count.replies)}
+              </span>
+            </Link>
 
             <button
               className={`flex items-center gap-1 ${post.is_liked ? "text-red-500" : "text-foreground-500 hover:text-red-500"}`}
@@ -249,19 +262,21 @@ export const PostCard = ({
               </span>
             </button>
 
-            {author && (
-              <button
-                className="text-foreground-500 hover:text-foreground"
-                onClick={() =>
-                  navigator.share?.({
-                    title: "Nesahub",
-                    url: `${process.env.NEXT_PUBLIC_APP_URL}/user/${author.username}/posts/${post.id}`,
-                  })
-                }
-              >
-                <Share size={16} />
-              </button>
-            )}
+            <button
+              className="text-foreground-500 hover:text-foreground"
+              onClick={() =>
+                navigator.share?.({
+                  title: "Nesahub",
+                  url: author
+                    ? `${process.env.NEXT_PUBLIC_APP_URL}/user/${author.username}/posts/${post.id}`
+                    : aiBot
+                      ? `${process.env.NEXT_PUBLIC_APP_URL}/bot/${aiBot.username}/posts/${post.id}`
+                      : "#",
+                })
+              }
+            >
+              <Share size={16} />
+            </button>
           </div>
         </div>
       </div>

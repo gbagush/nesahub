@@ -144,7 +144,6 @@ export async function POST(request: NextRequest) {
 
       if (messageToAI.length > 0) {
         getOXAResponseAndReply({
-          message: messageToAI,
           postId: savedPost.id,
         }).catch((e) => console.error("OXA Auto-reply failed:", e));
       }

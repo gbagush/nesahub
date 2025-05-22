@@ -8,35 +8,63 @@ const openai = new OpenAI({
 
 const OXA_BOT_ID = 1;
 
-export async function getOXAResponseAndReply({
-  message,
-  postId,
-}: {
-  message: string;
-  postId: number;
-}) {
+async function getParentPosts(postId: number, depth = 0): Promise<any[]> {
+  if (depth >= 10) return [];
+
+  const post = await db.post.findUnique({
+    where: { id: postId },
+    select: {
+      id: true,
+      content: true,
+      created_at: true,
+      user_id: true,
+      ai_bot_id: true,
+      parent_id: true,
+    },
+  });
+
+  if (!post) return [];
+
+  const parentMessages = post.parent_id
+    ? await getParentPosts(post.parent_id, depth + 1)
+    : [];
+
+  let role = "user";
+  if (post.ai_bot_id !== null) {
+    role = "assistant";
+  } else if (post.user_id !== null) {
+    role = "user";
+  }
+
+  return [
+    ...parentMessages,
+    {
+      role,
+      content: post.content,
+    },
+  ];
+}
+
+export async function getOXAResponseAndReply({ postId }: { postId: number }) {
   try {
+    const chatHistory = await getParentPosts(postId);
+
     const response = await openai.chat.completions.create({
       model: "deepseek-chat",
       messages: [
         {
           role: "system",
-          content: `You are OXA AI, a helpful assistant that provides very short answers (1-5 sentences max). 
-            Respond concisely and practically. 
-            For steps use numbers. Never write more than 100 words.`,
+          content: `You are OXA AI, the built-in assistant for NesaHub, a social media platform. Help users with social features, content, and questions. Keep replies short (1-5 sentences), friendly, and useful.`,
         },
-        {
-          role: "user",
-          content: message,
-        },
+        ...chatHistory,
       ],
-      max_tokens: 50,
-      temperature: 0.3,
+      max_tokens: 200,
+      temperature: 1.3,
     });
 
     const aiContent =
       response.choices[0]?.message?.content ||
-      "OXA AI: Sorry, I couldn't process that.";
+      "Sorry, I couldn't process that.";
 
     const aiReply = await db.post.create({
       data: {

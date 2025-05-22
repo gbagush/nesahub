@@ -18,6 +18,8 @@ import { Textarea } from "@heroui/input";
 
 import { Theme } from "emoji-picker-react";
 import type { Post } from "@/types/post";
+import type { User } from "@/types/user";
+import { User as HeroUIUser } from "@heroui/user";
 
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
@@ -32,6 +34,10 @@ export const CreatePostForm = ({
   const [loading, setLoading] = useState(false);
   const [gif, setGif] = useState("");
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionResults, setMentionResults] = useState<User[]>([]);
+  const [showMentions, setShowMentions] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useUser();
@@ -108,12 +114,82 @@ export const CreatePostForm = ({
               placeholder={parentId ? "Post your reply" : "What's happening?"}
               minRows={1}
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={async (e) => {
+                const value = e.target.value;
+                setContent(value);
+
+                const match = value
+                  .slice(0, e.target.selectionStart ?? undefined)
+                  .match(/@(\w+)$/);
+
+                if (match) {
+                  const keyword = match[1];
+                  setMentionQuery(keyword);
+                  setShowMentions(true);
+
+                  try {
+                    const res = await axios.get(
+                      `/api/users?keyword=${keyword}`
+                    );
+                    let users: User[] = res.data.data;
+
+                    if ("oxa".startsWith(keyword.toLowerCase())) {
+                      users.unshift({
+                        id: 1,
+                        username: "oxa",
+                        first_name: "OXA",
+                        last_name: "AI",
+                        profile_pict:
+                          "https://nhdevcdn.zeth.biz.id/images/OXA.png",
+                        bio: "AI assistant from Nesahub",
+                        gender: "NOT_SET",
+                        created_at: new Date().toISOString(),
+                      });
+                    }
+
+                    setMentionResults(users);
+                  } catch (err) {
+                    setMentionResults([]);
+                  }
+                } else {
+                  setShowMentions(false);
+                  setMentionResults([]);
+                }
+              }}
               classNames={{
                 inputWrapper: "border-b-1 border-foreground-100",
               }}
               className="mb-4"
             />
+
+            {showMentions && mentionResults.length > 0 && (
+              <div className="absolute bg-background border border-foreground-100 shadow-md rounded-md mt-1 z-50 max-h-60 overflow-y-auto w-64 p-2">
+                {mentionResults.map((user) => (
+                  <button
+                    key={user.id}
+                    onClick={() => {
+                      const cursor = content.lastIndexOf("@" + mentionQuery);
+                      const before = content.slice(0, cursor);
+                      const after = content.slice(
+                        cursor + mentionQuery.length + 1
+                      );
+                      const newContent = `${before}@${user.username} ${after}`;
+                      setContent(newContent);
+                      setShowMentions(false);
+                    }}
+                    className="p-2 w-full cursor-pointer hover:bg-foreground-50 flex items-center"
+                  >
+                    <HeroUIUser
+                      avatarProps={{
+                        src: user.profile_pict,
+                      }}
+                      name={`${user.first_name} ${user.last_name}`}
+                      description={`@${user.username}`}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
 
             {gif && (
               <div className="relative inline-block">

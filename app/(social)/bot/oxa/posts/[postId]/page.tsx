@@ -1,9 +1,6 @@
-import axios from "axios";
-
 import UserPostPage from "@/components/user-post/user-post-page";
 
 import { NotFoundSection } from "@/components/commons/navigations/social/not-found-section";
-import { db } from "@/lib/db";
 import { getPost } from "@/services/post";
 
 export default async function PostPage({
@@ -18,7 +15,7 @@ export default async function PostPage({
   try {
     const post = await getPost({ id: numericPostId });
 
-    if (!post || post.author?.username !== username)
+    if (!post || post.ai_bot_id !== 1)
       return (
         <NotFoundSection
           page="Post"

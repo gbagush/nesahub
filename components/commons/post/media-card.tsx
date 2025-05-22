@@ -25,7 +25,7 @@ export const MediaCard = ({
 
   return (
     <>
-      <div
+      <button
         onClick={() => setIsOpen(true)}
         className={`relative overflow-hidden rounded-lg cursor-pointer ${
           span ? "col-span-2" : ""
@@ -52,7 +52,7 @@ export const MediaCard = ({
             className="absolute bottom-2 left-2"
           />
         )}
-      </div>
+      </button>
 
       <Modal
         isOpen={isOpen}

@@ -14,13 +14,15 @@ const normalizeText = (text: string): string => {
 export const containsBadWord = (text: string): boolean => {
   const cleanedText = normalizeText(text);
 
+  const words = cleanedText.split(/\W+/);
+
   for (const word of badWords) {
     if (word.includes("*")) {
       const sanitizedWord = word.replace(/\*/g, "");
-      if (cleanedText.includes(sanitizedWord)) {
+      if (words.includes(sanitizedWord)) {
         return true;
       }
-    } else if (cleanedText.includes(word)) {
+    } else if (words.includes(word)) {
       return true;
     }
   }

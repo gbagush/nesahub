@@ -23,6 +23,14 @@ export const getPost = async ({
               profile_pict: true,
             },
           },
+          aiBot: {
+            select: {
+              id: true,
+              name: true,
+              username: true,
+              profile_pict: true,
+            },
+          },
         },
       },
       author: {
@@ -110,6 +118,14 @@ export const getPosts = async ({
               id: true,
               first_name: true,
               last_name: true,
+              username: true,
+              profile_pict: true,
+            },
+          },
+          aiBot: {
+            select: {
+              id: true,
+              name: true,
               username: true,
               profile_pict: true,
             },
