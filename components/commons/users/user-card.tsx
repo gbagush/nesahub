@@ -36,7 +36,9 @@ export const UserCard = ({ user: intitalUser }: { user: User }) => {
     <div className="flex items-start w-full justify-between">
       <Link href={`/user/${user.username}`}>
         <div className="flex gap-2 items-start w-full">
-          <Avatar src={user.profile_pict} />
+          <div>
+            <Avatar src={user.profile_pict} />
+          </div>
           <div className="flex flex-col">
             <div className="flex items-center justify-between w-full"></div>
             <span className="text-sm font-semibold">{`${user.first_name} ${user.last_name}`}</span>

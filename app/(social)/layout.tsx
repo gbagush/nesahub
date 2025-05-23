@@ -1,10 +1,9 @@
 import MobileDock from "@/components/commons/navigations/social/mobile-dock";
 import { SearchNav } from "@/components/commons/navigations/social/search-nav";
 import { Sidebar } from "@/components/commons/navigations/social/sidebar";
+import { WhoToFollow } from "@/components/commons/navigations/social/who-to-follow";
 import { Button } from "@heroui/button";
-import { Input } from "@heroui/input";
 import { User } from "@heroui/user";
-import { Search } from "lucide-react";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -22,47 +21,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <aside className="w-1/4 hidden lg:block pl-4">
         <SearchNav hideBackButton border={false} />
 
-        <div className="p-4 rounded-xl border border-foreground-100">
-          <h2 className="text-lg font-semibold mb-4">Who to follow</h2>
-          <ul className="space-y-2 text-sm">
-            <li className="flex items-center justify-between">
-              <User
-                avatarProps={{
-                  src: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-                }}
-                name="John Doe"
-                description="@johndoe"
-              />
-              <Button size="sm" radius="full">
-                Follow
-              </Button>
-            </li>
-            <li className="flex items-center justify-between">
-              <User
-                avatarProps={{
-                  src: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-                }}
-                name="John Doe"
-                description="@johndoe"
-              />
-              <Button size="sm" radius="full">
-                Follow
-              </Button>
-            </li>
-            <li className="flex items-center justify-between">
-              <User
-                avatarProps={{
-                  src: "https://i.pravatar.cc/150?u=a042581f4e29026024d",
-                }}
-                name="John Doe"
-                description="@johndoe"
-              />
-              <Button size="sm" radius="full">
-                Follow
-              </Button>
-            </li>
-          </ul>
-        </div>
+        <WhoToFollow />
       </aside>
     </div>
   );
