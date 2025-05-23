@@ -13,6 +13,7 @@ import { NavTab } from "@/components/commons/navigations/social/tab";
 import { PostCard } from "@/components/commons/post/post-card";
 
 import type { Post } from "@/types/post";
+import { NotFoundSection } from "@/components/commons/navigations/social/not-found-section";
 
 const LIMIT = 10;
 
@@ -71,7 +72,7 @@ export default function Home() {
         isSticky
       />
 
-      <section className="flex flex-col items-center justify-center gap-4">
+      <section className="flex flex-col items-center justify-center">
         {isSignedIn && (
           <CreatePostForm
             onNewPost={(newPost) => {
@@ -99,7 +100,12 @@ export default function Home() {
         )}
 
         {posts.length === 0 && !loading && (
-          <p className="text-center text-foreground-500">No posts found.</p>
+          <NotFoundSection
+            page="Following posts"
+            title="It's quiet here"
+            description="No posts from your follows yet, follow more to see posts here."
+            hideNavbar
+          />
         )}
       </section>
     </>

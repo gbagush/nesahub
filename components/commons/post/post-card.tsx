@@ -1,23 +1,31 @@
 "use client";
+
 import axios from "axios";
 import Link from "next/link";
 import { useState } from "react";
-import { addToast } from "@heroui/toast";
+import { useUser } from "@clerk/nextjs";
 import { formatDistanceToNow } from "date-fns";
+
+import { addToast } from "@heroui/toast";
 import { Avatar } from "@heroui/avatar";
 import {
   Bookmark,
   Bot,
   Dot,
+  Ellipsis,
   MessagesSquare,
+  Pencil,
   Repeat2,
   Share,
   ThumbsDown,
   ThumbsUp,
+  Trash,
+  UserPlus,
 } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "@heroui/popover";
+import { MediaCard } from "./media-card";
 
 import type { Post } from "@/types/post";
-import { MediaCard } from "./media-card";
 
 export const PostCard = ({
   post: initialPost,
@@ -27,8 +35,11 @@ export const PostCard = ({
   isPostReply?: boolean;
 }) => {
   const [post, setPost] = useState<Post>(initialPost);
+  const [isDeleted, setIsDeleted] = useState(false);
 
   const { author, aiBot, content, created_at, _count } = post;
+
+  const { user } = useUser();
 
   const handleAction = async (
     action: "like" | "dislike" | "repost" | "save"
@@ -127,10 +138,31 @@ export const PostCard = ({
     }
   };
 
+  const handleDeletePost = async () => {
+    try {
+      await axios.delete(`/api/posts/${post.id}`);
+      addToast({ description: "Post deleted successfully.", color: "success" });
+      setIsDeleted(true);
+    } catch (error) {
+      addToast({ description: "Failed to delete post.", color: "danger" });
+    }
+  };
+
+  const handleFollowUser = async () => {
+    try {
+      await axios.post(`/api/users/${post.author?.username}/follow`);
+      addToast({ description: "User followed sucessfully.", color: "success" });
+    } catch (error) {
+      addToast({ description: "Failed follow user.", color: "danger" });
+    }
+  };
+
   const media = post.media ?? [];
 
   return (
-    <div className="flex flex-col p-4 gap-4 w-full border-b border-foreground-100">
+    <div
+      className={`${isDeleted ? "hidden" : "flex flex-col"} p-4 gap-4 w-full border-b border-foreground-100`}
+    >
       <div className="flex gap-2 items-start w-full">
         {author && (
           <Link href={`/user/${author.username}`}>
@@ -141,23 +173,66 @@ export const PostCard = ({
         {aiBot && <Avatar src={aiBot.profile_pict} />}
 
         <div className="flex-1 min-w-0">
-          <Link
-            href={author ? `/user/${author.username}` : "#"}
-            className="flex flex-wrap items-center text-sm break-words"
-          >
-            <span className="font-semibold">
-              {author && `${author.first_name} ${author.last_name}`}
-              {aiBot && `${aiBot.name}`}
-            </span>
-            <span className="ml-1 text-foreground-500">
-              @{author && author.username}
-              {aiBot && aiBot.username}
-            </span>
-            <Dot className="text-foreground-500" size={20} />
-            <span className="ml-1 text-foreground-500">
-              {formatDistanceToNow(new Date(created_at))}
-            </span>
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link
+              href={author ? `/user/${author.username}` : "#"}
+              className="flex flex-wrap items-center text-sm break-words"
+            >
+              <span className="font-semibold">
+                {author && `${author.first_name} ${author.last_name}`}
+                {aiBot && `${aiBot.name}`}
+              </span>
+              <span className="ml-1 text-foreground-500">
+                @{author && author.username}
+                {aiBot && aiBot.username}
+              </span>
+              <Dot className="text-foreground-500" size={20} />
+              <span className="ml-1 text-foreground-500">
+                {formatDistanceToNow(new Date(created_at))}
+              </span>
+            </Link>
+            {author && !isDeleted && (
+              <Popover placement="bottom-end">
+                <PopoverTrigger>
+                  <button>
+                    <Ellipsis
+                      size={20}
+                      className="text-foreground-500 hover:text-foreground"
+                    />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent>
+                  <div className="flex flex-col py-2">
+                    {user && user.username === author?.username ? (
+                      <>
+                        <Link
+                          href={`/user/${author.username}/posts/${post.id}/edit`}
+                          className="flex items-center gap-4 p-2 rounded-lg hover:bg-foreground-100"
+                        >
+                          <Pencil size={16} /> Edit post
+                        </Link>
+                        <button
+                          className="flex items-center gap-4 p-2 rounded-lg hover:bg-foreground-100"
+                          onClick={handleDeletePost}
+                        >
+                          <Trash size={16} /> Delete post
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          className="flex items-center gap-4 p-2 rounded-lg hover:bg-foreground-100"
+                          onClick={handleFollowUser}
+                        >
+                          <UserPlus size={16} /> Follow @{author?.username}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
 
           {!isPostReply && post.parent && (
             <p className="text-sm text-foreground-500">
@@ -178,6 +253,10 @@ export const PostCard = ({
                 </Link>
               ) : null}
             </p>
+          )}
+
+          {post.is_parent_deleted && (
+            <p className="text-sm text-foreground-500">Reply deleted post</p>
           )}
 
           <p className="text-sm whitespace-pre-line break-words">

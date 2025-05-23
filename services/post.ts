@@ -7,9 +7,10 @@ export const getPost = async ({
   id: number;
   userId?: number;
 }) => {
-  return await db.post.findUnique({
+  const post = await db.post.findUnique({
     where: {
       id: id,
+      deleted_at: null,
     },
     include: {
       parent: {
@@ -52,13 +53,18 @@ export const getPost = async ({
       },
       media: {
         select: {
+          id: true,
           source: true,
           path: true,
         },
       },
       _count: {
         select: {
-          replies: true,
+          replies: {
+            where: {
+              deleted_at: null,
+            },
+          },
           liked_by: true,
           disliked_by: true,
           reposted_by: true,
@@ -91,6 +97,18 @@ export const getPost = async ({
         : false,
     },
   });
+
+  if (!post) return null;
+
+  if (post.parent && post.parent.deleted_at !== null) {
+    const { parent, ...rest } = post;
+    return {
+      ...rest,
+      is_parent_deleted: true,
+    };
+  }
+
+  return post;
 };
 
 export const getPosts = async ({
@@ -106,8 +124,11 @@ export const getPosts = async ({
   userId?: number | null;
   sort?: "desc" | "asc";
 }) => {
-  return await db.post.findMany({
-    where,
+  const posts = await db.post.findMany({
+    where: {
+      ...where,
+      deleted_at: null,
+    },
     skip,
     take: limit,
     include: {
@@ -151,13 +172,18 @@ export const getPosts = async ({
       },
       media: {
         select: {
+          id: true,
           source: true,
           path: true,
         },
       },
       _count: {
         select: {
-          replies: true,
+          replies: {
+            where: {
+              deleted_at: null,
+            },
+          },
           liked_by: true,
           disliked_by: true,
           reposted_by: true,
@@ -190,5 +216,16 @@ export const getPosts = async ({
         : false,
     },
     orderBy: { created_at: sort },
+  });
+
+  return posts.map((post) => {
+    if (post.parent && post.parent.deleted_at !== null) {
+      const { parent, ...rest } = post;
+      return {
+        ...rest,
+        is_parent_deleted: true,
+      };
+    }
+    return post;
   });
 };

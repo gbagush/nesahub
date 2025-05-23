@@ -1,9 +1,6 @@
-import axios from "axios";
-
 import UserPostPage from "@/components/user-post/user-post-page";
 
 import { NotFoundSection } from "@/components/commons/navigations/social/not-found-section";
-import { db } from "@/lib/db";
 import { getPost } from "@/services/post";
 
 export default async function PostPage({

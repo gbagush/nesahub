@@ -19,6 +19,7 @@ export interface Post {
   is_liked?: boolean;
   is_reposted?: boolean;
   is_saved?: boolean;
+  is_parent_deleted?: boolean;
 }
 
 export interface PostStats {
@@ -30,6 +31,7 @@ export interface PostStats {
 }
 
 export interface PostMedia {
+  id: number;
   source: "USERCONTENT" | "GIPHY";
   path: string;
 }

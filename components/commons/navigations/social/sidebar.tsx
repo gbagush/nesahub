@@ -35,7 +35,7 @@ export const Sidebar = () => {
       <Image
         src={Logo}
         alt="Logo"
-        className="w-10 h-10 mb-4 ml-2 invert dark:invert-0"
+        className="w-8 h-8 mb-4 ml-3 invert dark:invert-0"
       />
 
       <div className="flex flex-col gap-2 w-full">

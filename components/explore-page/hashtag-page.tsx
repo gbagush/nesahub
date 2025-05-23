@@ -69,7 +69,7 @@ export default function HashTagPage({ hashtag }: { hashtag: string }) {
   return (
     <>
       <SearchNav query={`#${hashtag}`} />
-      <section className="flex flex-col items-center justify-center gap-4">
+      <section className="flex flex-col items-center justify-center">
         {posts.length > 0 &&
           posts.map((post) => <PostCard key={post.id} post={post} />)}
 

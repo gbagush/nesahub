@@ -36,3 +36,16 @@ export async function uploadToFtp(file: File): Promise<string> {
     client.close();
   }
 }
+
+export async function deleteFromFTP(path: string): Promise<void> {
+  const client = new Client();
+  try {
+    await client.access(FTP_CONFIG);
+    await client.remove(path);
+    console.log(`Successfully deleted file from FTP: ${path}`);
+  } catch (err) {
+    console.error(`Failed to delete file from FTP: ${path}`, err);
+  } finally {
+    client.close();
+  }
+}

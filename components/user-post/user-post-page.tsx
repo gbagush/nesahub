@@ -102,7 +102,7 @@ export default function UserPostPage({
       {loading && page === 1 && <Spinner className="py-4" />}
 
       {post && (
-        <section className="flex flex-col items-center justify-center gap-4">
+        <section className="flex flex-col items-center justify-center">
           <PostCard post={post} />
 
           <CreatePostForm

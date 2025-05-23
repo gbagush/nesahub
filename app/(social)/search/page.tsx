@@ -118,7 +118,7 @@ const SearchPage = () => {
           hideNavbar
         />
       )}
-      <section className="flex flex-col items-center justify-center gap-4">
+      <section className="flex flex-col items-center justify-center ">
         {users.length > 0 && (
           <div className="flex flex-col w-full p-4 gap-2 items-start border-b border-foreground-100">
             <h2 className="text-xl font-semibold mb-2">People</h2>

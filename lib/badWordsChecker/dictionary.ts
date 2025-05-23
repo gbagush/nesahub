@@ -767,7 +767,6 @@ export const badWords = [
   "sucking",
   "sucks",
   "suicide",
-  "suka",
   "taek",
   "tai",
   "tanpa busana",
