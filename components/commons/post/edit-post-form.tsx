@@ -131,7 +131,9 @@ export const EditPostForm = ({
     <div className="flex flex-col gap-4 p-4 w-full border-b-1 border-foreground-100">
       {user && (
         <div className="flex gap-4">
-          <Avatar src={user.imageUrl} />
+          <div>
+            <Avatar src={user.imageUrl} />
+          </div>
           <div className="w-full">
             <Textarea
               variant="underlined"

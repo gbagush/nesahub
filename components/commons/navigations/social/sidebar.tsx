@@ -11,6 +11,7 @@ import {
   Bookmark,
   Home,
   LogOut,
+  Mail,
   Search,
   Settings,
   SunMoon,
@@ -44,6 +45,11 @@ export const Sidebar = () => {
           icon={<Search size={24} />}
           title="Explore"
           href="/search"
+        />
+        <SidebarItem
+          icon={<Mail size={24} />}
+          title="Messages"
+          href="/messages"
         />
         <SidebarItem
           icon={<Bookmark size={24} />}

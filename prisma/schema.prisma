@@ -31,6 +31,9 @@ model User {
   following     User[]         @relation("UserFollows")
   followers     User[]         @relation("UserFollows")
 
+  conversations ConversationParticipant[] @relation("UserConversations")
+  sent_messages Message[]                 @relation("UserMessages")
+
   @@map("users")
 }
 
@@ -140,6 +143,45 @@ model PostSave {
   created_at DateTime @default(now())
 
   @@id([postId, userId])
+}
+
+model Conversation {
+  id            Int             @id @default(autoincrement())
+  is_group      Boolean         @default(false)
+  created_at    DateTime        @default(now())
+  updated_at    DateTime        @updatedAt
+
+  participants  ConversationParticipant[]
+  messages      Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id              Int           @id @default(autoincrement())
+  conversation    Conversation  @relation(fields: [conversationId], references: [id])
+  conversationId  Int
+  user            User          @relation("UserConversations", fields: [userId], references: [id])
+  userId          Int
+  joined_at       DateTime      @default(now())
+  last_read_at    DateTime?
+
+  @@unique([conversationId, userId])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id              Int           @id @default(autoincrement())
+  conversation    Conversation  @relation(fields: [conversationId], references: [id])
+  conversationId  Int
+  sender          User          @relation("UserMessages", fields: [senderId], references: [id])
+  senderId        Int
+  content         String        @db.Text
+  created_at      DateTime      @default(now())
+  updated_at      DateTime?     @updatedAt
+  deleted_at      DateTime?
+
+  @@map("messages")
 }
 
 enum MediaSource {

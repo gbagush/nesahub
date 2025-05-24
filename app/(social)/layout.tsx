@@ -2,8 +2,6 @@ import MobileDock from "@/components/commons/navigations/social/mobile-dock";
 import { SearchNav } from "@/components/commons/navigations/social/search-nav";
 import { Sidebar } from "@/components/commons/navigations/social/sidebar";
 import { WhoToFollow } from "@/components/commons/navigations/social/who-to-follow";
-import { Button } from "@heroui/button";
-import { User } from "@heroui/user";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (

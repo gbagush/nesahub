@@ -5,7 +5,7 @@ export interface User {
   username: string;
   profile_pict: string;
   bio?: string;
-  gender: "MALE" | "FEMALE" | "NOT_SET";
+  gender?: "MALE" | "FEMALE" | "NOT_SET";
   created_at: string;
   _count?: UserStats;
   is_followed?: boolean;
