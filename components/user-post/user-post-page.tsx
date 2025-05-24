@@ -11,6 +11,7 @@ import { PostCard } from "@/components/commons/post/post-card";
 import { Navbar } from "../commons/navigations/social/navbar";
 
 import type { Post } from "@/types/post";
+import { NotFoundSection } from "../commons/navigations/social/not-found-section";
 
 const LIMIT = 10;
 
@@ -113,7 +114,12 @@ export default function UserPostPage({
           />
 
           {replies.length === 0 && !loading && (
-            <span className="text-foreground-500">No replies found</span>
+            <NotFoundSection
+              page="User post"
+              title="No replies found"
+              description="Be the first to reply to this post."
+              hideNavbar
+            />
           )}
 
           {replies.map((reply) => (

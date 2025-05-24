@@ -42,9 +42,8 @@ export async function deleteFromFTP(path: string): Promise<void> {
   try {
     await client.access(FTP_CONFIG);
     await client.remove(path);
-    console.log(`Successfully deleted file from FTP: ${path}`);
   } catch (err) {
-    console.error(`Failed to delete file from FTP: ${path}`, err);
+    console.error(`Error: Failed to delete file from FTP ${path}`, err);
   } finally {
     client.close();
   }

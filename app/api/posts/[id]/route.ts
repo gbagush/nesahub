@@ -194,9 +194,13 @@ export async function PUT(
         where: { postId: postId },
       });
 
-      const mediaToDelete = existingPost.media.filter(
-        (media) => !keepMediaIds.includes(media.id)
-      );
+      const mediaToDelete = existingPost.media.filter((media) => {
+        // Delete if not in keepMediaIds, or if it's a GIPHY media and we received new giphy or empty string
+        return (
+          (!keepMediaIds.includes(media.id) && media.source !== "GIPHY") ||
+          (media.source === "GIPHY" && giphy !== media.path)
+        );
+      });
 
       if (mediaToDelete.length > 0) {
         await tx.postMedia.deleteMany({

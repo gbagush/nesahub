@@ -16,6 +16,7 @@ import { Theme } from "emoji-picker-react";
 import type { Post, PostMedia } from "@/types/post";
 import type { User } from "@/types/user";
 import { User as HeroUIUser } from "@heroui/user";
+import { useRouter } from "next/navigation";
 
 const EmojiPicker = dynamic(() => import("emoji-picker-react"), { ssr: false });
 
@@ -44,6 +45,8 @@ export const EditPostForm = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useUser();
   const { theme } = useTheme();
+
+  const router = useRouter();
 
   useEffect(() => {
     setContent(post.content || "");
@@ -103,6 +106,8 @@ export const EditPostForm = ({
         });
         onPostUpdated && onPostUpdated(response.data.data);
       }
+
+      router.push(`/user/${post.author?.username}/posts/${post.id}`);
     } catch (error: any) {
       addToast({
         description: error.response?.data?.message || "Failed to update post.",
@@ -217,7 +222,17 @@ export const EditPostForm = ({
                   unoptimized
                 />
                 <button
-                  onClick={() => setGif("")}
+                  onClick={() => {
+                    setGif("");
+                    const existingGiphy = post.media?.find(
+                      (m) => m.source === "GIPHY"
+                    );
+                    if (existingGiphy) {
+                      setKeepMediaIds((prev) =>
+                        prev.filter((id) => id !== existingGiphy.id)
+                      );
+                    }
+                  }}
                   className="absolute top-1 right-1 bg-foreground bg-opacity-50 rounded-full p-1 hover:bg-opacity-100 transition"
                 >
                   <X size={20} className="text-background" />
@@ -324,7 +339,23 @@ export const EditPostForm = ({
                     />
                   </PopoverContent>
                 </Popover>
-                <GifPopover onSelected={(gif) => setGif(gif)} />
+                <GifPopover
+                  onSelected={(selectedGif) => {
+                    // Always update GIF value
+                    setGif(selectedGif);
+
+                    // If there was an existing GIPHY, remove it from keep list
+                    const existingGiphy = post.media?.find(
+                      (m) => m.source === "GIPHY"
+                    );
+
+                    if (existingGiphy) {
+                      setKeepMediaIds((prev) =>
+                        prev.filter((id) => id !== existingGiphy.id)
+                      );
+                    }
+                  }}
+                />
               </div>
               <Button
                 className="font-semibold"

@@ -6,7 +6,7 @@ const GIPHY_API_KEY = process.env.GIPHY_API_KEY;
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const query = searchParams.get("query");
-  const limit = 12;
+  const limit = 20;
 
   const endpoint = query
     ? `https://api.giphy.com/v1/gifs/search`
