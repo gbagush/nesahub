@@ -20,6 +20,7 @@ import { ChatBubble } from "./chat-bubble";
 import { NotFoundSection } from "../commons/navigations/social/not-found-section";
 
 import type { Conversation, Message } from "@/types/conversation";
+import { useSocket } from "@/providers/socket-provider";
 
 export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
   const [conversation, setConversation] = useState<Conversation>();
@@ -40,6 +41,8 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  const { on } = useSocket();
 
   const [topRef, topInView] = useInView({
     threshold: 0.5,
@@ -186,6 +189,34 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
   const otherParticipant =
     conversation &&
     conversation.participants.find((p) => p.user.username !== user?.username);
+
+  on("incoming-message", (payload) => {
+    console.log("Received incoming message:", payload);
+
+    setMessages((prev) => {
+      const exists = prev.some((msg) => msg.id === payload.id);
+
+      if (exists) {
+        return prev;
+      }
+
+      const container = scrollContainerRef.current;
+      const isAlreadyAtBottom =
+        container &&
+        container.scrollHeight - container.scrollTop <=
+          container.clientHeight + 50;
+
+      if (isAlreadyAtBottom && messagesEndRef.current) {
+        setTimeout(() => {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }, 0);
+      } else {
+        setAutoScrollEnabled(false);
+      }
+
+      return [...prev, payload];
+    });
+  });
 
   return (
     <>

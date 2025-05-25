@@ -147,6 +147,29 @@ export const getMessagesByConversationId = async ({
   return messages.reverse();
 };
 
+export const getOtherUserInConversation = async ({
+  conversationId,
+  currentUserId,
+}: {
+  conversationId: number;
+  currentUserId: number;
+}) => {
+  const participants = await db.conversationParticipant.findMany({
+    where: {
+      conversationId,
+    },
+    include: {
+      user: true,
+    },
+  });
+
+  const otherParticipant = participants.find(
+    (p) => p.user.id !== currentUserId
+  );
+
+  return otherParticipant?.user || null;
+};
+
 export const sendMessage = async ({
   conversationId,
   senderId,

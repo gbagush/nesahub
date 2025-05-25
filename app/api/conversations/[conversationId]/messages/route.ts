@@ -1,7 +1,13 @@
+import axios from "axios";
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getUserByClerkId } from "@/services/user";
-import { getMessagesByConversationId, sendMessage } from "@/services/message";
+import {
+  getMessagesByConversationId,
+  getOtherUserInConversation,
+  sendMessage,
+} from "@/services/message";
 
 export async function GET(
   req: NextRequest,
@@ -87,6 +93,18 @@ export async function POST(
       conversationId,
       senderId: user.id,
       content,
+    });
+
+    const otherUser = await getOtherUserInConversation({
+      conversationId,
+      currentUserId: user.id,
+    });
+
+    await axios.post(process.env.SOCKET_WEBHOOK_BASE_URI!, {
+      secret: process.env.SOCKET_WEBHOOK_SECRET,
+      event: "incoming-message",
+      userId: otherUser?.clerk_id,
+      data: newMessage,
     });
 
     return NextResponse.json(
