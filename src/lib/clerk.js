@@ -14,7 +14,6 @@ async function authenticateSocket(socket, next) {
     if (!authResult.isSignedIn) return next(new Error("Unauthorized"));
 
     socket.auth = authResult.toAuth();
-    console.log("✅ Authenticated:", socket.auth.userId);
 
     next();
   } catch (err) {
