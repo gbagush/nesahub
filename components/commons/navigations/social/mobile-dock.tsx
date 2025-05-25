@@ -25,7 +25,7 @@ import { useRouter } from "next/navigation";
 
 export default function MobileDock() {
   return (
-    <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between bg-background border-t border-foreground-100 h-16 px-8 lg:hidden">
+    <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between bg-background border-t border-foreground-100 h-16 px-4 lg:hidden">
       <Link href="/home" className="flex flex-col items-center gap-1">
         <Home className="w-5 h-5 " />
       </Link>

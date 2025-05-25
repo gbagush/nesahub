@@ -13,7 +13,7 @@ export default function MessagesPage() {
         />
       </div>
       <div className="lg:hidden">
-        <ChatList />
+        <ChatList className="!w-full !lg:w-full flex flex-col" />
       </div>
     </>
   );

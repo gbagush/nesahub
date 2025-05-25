@@ -1,17 +1,18 @@
 "use client";
 import axios from "axios";
 import { useState, useEffect } from "react";
-
-import { Input } from "@heroui/input";
-import { Search } from "lucide-react";
-
-import { ChatCard } from "./chat-card";
-import { addToast } from "@heroui/toast";
-import type { Conversation } from "@/types/conversation";
-import { Spinner } from "@heroui/spinner";
 import { useUser } from "@clerk/nextjs";
 
-export const ChatList = () => {
+import { addToast } from "@heroui/toast";
+import { Input } from "@heroui/input";
+import { Search } from "lucide-react";
+import { Spinner } from "@heroui/spinner";
+
+import { ChatCard } from "./chat-card";
+
+import type { Conversation } from "@/types/conversation";
+
+export const ChatList = ({ className = "" }: { className?: string }) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,7 +38,9 @@ export const ChatList = () => {
   }, []);
 
   return (
-    <div className="flex flex-col gap-4 w-full lg:w-2/5 lg:border-l lg:border-foreground-100 pb-[72px] lg:pb-0 p-4">
+    <div
+      className={`flex flex-col gap-4 w-full lg:w-2/5 lg:border-l lg:border-foreground-100 pb-[72px] lg:pb-0 p-4 ${className}`}
+    >
       <h4 className="font-semibold text-xl">Messages</h4>
 
       <Input
