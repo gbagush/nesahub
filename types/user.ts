@@ -4,6 +4,7 @@ export interface User {
   last_name: string;
   username: string;
   profile_pict: string;
+  clerk_id: string;
   bio?: string;
   gender?: "MALE" | "FEMALE" | "NOT_SET";
   created_at: string;

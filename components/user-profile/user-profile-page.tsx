@@ -10,7 +10,7 @@ import { addToast } from "@heroui/toast";
 
 import { Avatar } from "@heroui/avatar";
 import { Button } from "@heroui/button";
-import { Calendar, EllipsisVertical, Mail } from "lucide-react";
+import { Calendar, Mail } from "lucide-react";
 import { Spinner } from "@heroui/spinner";
 
 import { PostCard } from "../commons/post/post-card";
@@ -22,6 +22,8 @@ import { NavTab } from "../commons/navigations/social/tab";
 import Link from "next/link";
 import { NotFoundSection } from "../commons/navigations/social/not-found-section";
 import { EditProfileModal } from "./edit-profile-modal";
+
+import type { Conversation } from "@/types/conversation";
 
 const LIMIT = 10;
 
@@ -35,6 +37,8 @@ export const UserProfilePage = ({
   const [userData, setUserData] = useState<User | null>(null);
 
   const [loading, setLoading] = useState(true);
+
+  const { user } = useUser();
 
   const fetchUserData = async () => {
     setLoading(true);
@@ -85,6 +89,7 @@ export const UserProfileHeader = ({
   userData: User;
 }) => {
   const [userData, setUserData] = useState<User>(initialUserData);
+  const [conversation, setConversation] = useState<Conversation>();
 
   const { isSignedIn, user } = useUser();
 
@@ -122,6 +127,30 @@ export const UserProfileHeader = ({
     }
   };
 
+  const fetchConversation = async () => {
+    if (!user || user?.username === userData.username) {
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `/api/users/${userData.username}/conversation`
+      );
+
+      setConversation(response.data?.data);
+    } catch (error) {
+      addToast({
+        title: "Error",
+        description: "Failed to fetch user data",
+        color: "danger",
+      });
+    }
+  };
+
+  useEffect(() => {
+    fetchConversation();
+  }, [user]);
+
   return (
     <div className="flex flex-col w-full justify-start border-b border-foreground-200">
       <div className="p-4">
@@ -147,13 +176,17 @@ export const UserProfileHeader = ({
 
           {isSignedIn && user.username !== userData.username ? (
             <div className="flex gap-2 items-center">
-              <Button variant="ghost" radius="full" isIconOnly>
-                <EllipsisVertical size={16} />
-              </Button>
-
-              <Button variant="ghost" radius="full" isIconOnly>
-                <Mail size={16} />
-              </Button>
+              {conversation && (
+                <Button
+                  as={Link}
+                  href={`/messages/${conversation.id}`}
+                  variant="ghost"
+                  radius="full"
+                  isIconOnly
+                >
+                  <Mail size={16} />
+                </Button>
+              )}
 
               <Button variant="ghost" radius="full" onPress={handleFollow}>
                 {userData.is_followed ? "Unfollow" : "Follow"}

@@ -15,15 +15,8 @@ export async function GET(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-
-    const searchParams = req.nextUrl.searchParams;
-    const page = parseInt(searchParams.get("page") || "1", 10);
-    const limit = parseInt(searchParams.get("limit") || "20", 10);
-
     const result = await getConversationsWithLastMessage({
       userId: user.id,
-      skip: (page - 1) * limit,
-      limit: limit,
     });
 
     return NextResponse.json(

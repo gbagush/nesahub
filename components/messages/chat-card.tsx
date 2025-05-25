@@ -1,31 +1,46 @@
 "use client";
 import Link from "next/link";
 import { Avatar } from "@heroui/avatar";
+import type { Conversation, Participant } from "@/types/conversation";
 
 export const ChatCard = ({
-  id,
-  name,
-  username,
-  profile_picture,
-  message,
+  conversation,
+  otherParticipant,
 }: {
-  id: number;
-  name: string;
-  username: string;
-  profile_picture: string;
-  message: string;
+  conversation: Conversation;
+  otherParticipant: Participant;
 }) => {
+  const latestMessage = conversation.messages[0];
+  const isUnread = latestMessage?.senderId === otherParticipant.userId;
+
   return (
-    <Link href={`/messages/${id}`} className="flex items-center gap-2 w-full">
+    <Link
+      href={`/messages/${conversation.id}`}
+      className="flex items-center gap-2 w-full"
+    >
       <div>
-        <Avatar src={profile_picture} />
+        <Avatar src={otherParticipant.user.profile_pict} />
       </div>
       <div className="flex flex-col min-w-0 w-full">
         <div className="flex flex-wrap items-center text-sm break-words">
-          <span className="font-semibold">{name}</span>
-          <span className="text-foreground-500 ml-1">@{username}</span>
+          <span className="font-semibold">
+            {otherParticipant.user.first_name} {otherParticipant.user.last_name}
+          </span>
+          <span className="text-foreground-500 ml-1">
+            @{otherParticipant.user.username}
+          </span>
         </div>
-        <span className="text-sm text-foreground-500 truncate">{message}</span>
+        <span
+          className={`flex items-center justify-between text-sm truncate ${
+            isUnread ? "font-semibold text-foreground" : "text-foreground-500"
+          }`}
+        >
+          {latestMessage?.content || "Send first message"}
+
+          {isUnread && (
+            <span className="ml-2 w-2 h-2 rounded-full bg-primary" />
+          )}
+        </span>
       </div>
     </Link>
   );

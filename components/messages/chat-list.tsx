@@ -1,7 +1,11 @@
 "use client";
+
 import axios from "axios";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
+
+import { useConversations } from "@/stores/conversations";
+import { useSocket } from "@/providers/socket-provider";
 
 import { addToast } from "@heroui/toast";
 import { Input } from "@heroui/input";
@@ -9,14 +13,15 @@ import { Search } from "lucide-react";
 import { Spinner } from "@heroui/spinner";
 
 import { ChatCard } from "./chat-card";
-
-import type { Conversation } from "@/types/conversation";
+import type { Message } from "@/types/conversation";
 
 export const ChatList = ({ className = "" }: { className?: string }) => {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
-
   const { user } = useUser();
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  const { conversations, setConversations } = useConversations();
+  const { on } = useSocket();
 
   useEffect(() => {
     const getConversations = async () => {
@@ -35,7 +40,52 @@ export const ChatList = ({ className = "" }: { className?: string }) => {
     };
 
     getConversations();
-  }, []);
+  }, [setConversations]);
+
+  useEffect(() => {
+    const handleIncomingMessage = (payload: {
+      message: Message;
+      conversation: any;
+    }) => {
+      const { message, conversation } = payload;
+
+      setConversations((prev) => {
+        const existingIndex = prev.findIndex((c) => c.id === conversation.id);
+
+        if (existingIndex === -1) {
+          return [
+            {
+              ...conversation,
+              messages: [message],
+              updated_at: new Date().toISOString(),
+            },
+            ...prev,
+          ];
+        }
+
+        const updated = [...prev];
+        const existingConv = updated[existingIndex];
+
+        const messageExists = existingConv.messages.some(
+          (msg) => msg.id === message.id
+        );
+        if (!messageExists) {
+          updated[existingIndex] = {
+            ...existingConv,
+            messages: [message, ...existingConv.messages],
+            updated_at: new Date().toISOString(),
+          };
+        }
+
+        return updated.sort(
+          (a, b) =>
+            new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        );
+      });
+    };
+
+    on("incoming-message", handleIncomingMessage);
+  }, [on, setConversations]);
 
   return (
     <div
@@ -47,35 +97,45 @@ export const ChatList = ({ className = "" }: { className?: string }) => {
         radius="full"
         placeholder="Search messages"
         variant="bordered"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
         startContent={<Search size={16} />}
       />
 
       {loading && <Spinner className="py-4" />}
 
       {!loading &&
-        conversations.length > 0 &&
-        conversations.map((conversation) => {
-          const otherParticipant = conversation.participants.find(
-            (p) => p.user.username !== user?.username
-          );
+        conversations
+          .filter((conversation) => {
+            const otherParticipant = conversation.participants.find(
+              (p) => p.user.username !== user?.username
+            );
 
-          if (!otherParticipant) return null;
+            if (!otherParticipant) return false;
 
-          return (
-            <ChatCard
-              key={conversation.id}
-              id={conversation.id}
-              username={otherParticipant.user.username}
-              name={`${otherParticipant.user.first_name} ${otherParticipant.user.last_name}`}
-              profile_picture={otherParticipant.user.profile_pict}
-              message={
-                conversation.messages[0]
-                  ? conversation.messages[0].content
-                  : "Send first message"
-              }
-            />
-          );
-        })}
+            const fullName = `${otherParticipant.user.first_name} ${otherParticipant.user.last_name}`;
+            const username = otherParticipant.user.username;
+
+            return (
+              fullName.toLowerCase().includes(search.toLowerCase()) ||
+              username.toLowerCase().includes(search.toLowerCase())
+            );
+          })
+          .map((conversation) => {
+            const otherParticipant = conversation.participants.find(
+              (p) => p.user.username !== user?.username
+            );
+
+            if (!otherParticipant) return null;
+
+            return (
+              <ChatCard
+                key={conversation.id}
+                conversation={conversation}
+                otherParticipant={otherParticipant}
+              />
+            );
+          })}
     </div>
   );
 };

@@ -1,5 +1,4 @@
 import { db } from "@/lib/db";
-import { createConversation } from "@/services/message";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -75,21 +74,6 @@ export async function POST(
         },
       },
     });
-
-    const isFollowBack = await db.user.findUnique({
-      where: { id: followedUser.id },
-      select: {
-        following: {
-          where: { id: user.id },
-        },
-      },
-    });
-
-    const isMutual = isFollowBack && isFollowBack?.following.length > 0;
-
-    if (isMutual) {
-      createConversation({ userIds: [followedUser.id, user.id] });
-    }
 
     return NextResponse.json(
       { message: "Successfully followed user" },

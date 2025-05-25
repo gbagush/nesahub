@@ -22,9 +22,7 @@ export const ChatBubble = ({
       }`}
     >
       {isShortContent ? (
-        <div
-          className={`flex items-baseline gap-1 ${isSender ? "flex-row" : "flex-row-reverse"}`}
-        >
+        <div className="flex items-baseline gap-1 flex-row">
           <div className="whitespace-pre-wrap flex-1">{content}</div>
           <div className="text-[9px] opacity-70 shrink-0 leading-none">
             {formattedTime}

@@ -19,7 +19,20 @@ export const createConversation = async ({
       },
     },
     include: {
-      participants: true,
+      participants: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              profile_pict: true,
+              first_name: true,
+              last_name: true,
+              clerk_id: true,
+            },
+          },
+        },
+      },
     },
   });
 
@@ -35,7 +48,20 @@ export const createConversation = async ({
       },
     },
     include: {
-      participants: true,
+      participants: {
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              profile_pict: true,
+              first_name: true,
+              last_name: true,
+              clerk_id: true,
+            },
+          },
+        },
+      },
     },
   });
 };
@@ -59,6 +85,7 @@ export const getConversationById = async ({
               profile_pict: true,
               first_name: true,
               last_name: true,
+              clerk_id: true,
             },
           },
         },
@@ -73,10 +100,12 @@ export const getConversationsWithLastMessage = async ({
   userId,
   limit = 20,
   skip = 0,
+  hideNoMessage = true,
 }: {
   userId: number;
   limit?: number;
   skip?: number;
+  hideNoMessage?: boolean;
 }) => {
   const conversations = await db.conversation.findMany({
     where: {
@@ -99,6 +128,7 @@ export const getConversationsWithLastMessage = async ({
               profile_pict: true,
               first_name: true,
               last_name: true,
+              clerk_id: true,
             },
           },
         },
@@ -112,7 +142,11 @@ export const getConversationsWithLastMessage = async ({
     },
   });
 
-  return conversations;
+  const filtered = hideNoMessage
+    ? conversations.filter((conversation) => conversation.messages.length > 0)
+    : conversations;
+
+  return filtered;
 };
 
 export const getMessagesByConversationId = async ({
@@ -139,6 +173,9 @@ export const getMessagesByConversationId = async ({
           id: true,
           username: true,
           profile_pict: true,
+          first_name: true,
+          last_name: true,
+          clerk_id: true,
         },
       },
     },
@@ -191,6 +228,9 @@ export const sendMessage = async ({
           id: true,
           username: true,
           profile_pict: true,
+          first_name: true,
+          last_name: true,
+          clerk_id: true,
         },
       },
     },

@@ -5,27 +5,28 @@ import React, { useEffect, useRef, useState } from "react";
 import { format, isSameDay } from "date-fns";
 import { useInView } from "react-intersection-observer";
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
 
-import Link from "next/link";
+import { useSocket } from "@/providers/socket-provider";
+import { useConversations } from "@/stores/conversations";
 
 import { addToast } from "@heroui/toast";
-import { ArrowLeft, SendHorizonal } from "lucide-react";
-import { Avatar } from "@heroui/avatar";
-import { Button } from "@heroui/button";
+import { SendHorizonal } from "lucide-react";
 import { Spinner } from "@heroui/spinner";
 import { Textarea } from "@heroui/input";
 
 import { ChatBubble } from "./chat-bubble";
+import { UserBanner } from "./user-banner";
+import { ChatHeader } from "./chat-header";
+
 import { NotFoundSection } from "../commons/navigations/social/not-found-section";
 
 import type { Conversation, Message } from "@/types/conversation";
-import { useSocket } from "@/providers/socket-provider";
+import { ChatInput } from "./chat-input";
+import { TypingIndicator } from "./typing-indicator";
 
 export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
   const [conversation, setConversation] = useState<Conversation>();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [message, setMessage] = useState("");
 
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -36,9 +37,12 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
 
-  const { user } = useUser();
+  const [isTyping, setIsTyping] = useState(false);
+  const typingTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const router = useRouter();
+  const { user } = useUser();
+  const { setConversations } = useConversations();
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -48,7 +52,7 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
     threshold: 0.5,
   });
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = async (message: string) => {
     try {
       const result = await axios.post(
         `/api/conversations/${conversationId}/messages/`,
@@ -57,7 +61,26 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
         }
       );
 
-      setMessage("");
+      const newMessage: Message = result.data.data;
+
+      setConversations((prev: Conversation[]) => {
+        return [...prev]
+          .map((conv) => {
+            if (conv.id === newMessage.conversationId) {
+              return {
+                ...conv,
+                updated_at: new Date().toISOString(),
+                messages: [newMessage, ...conv.messages],
+              };
+            }
+            return conv;
+          })
+          .sort(
+            (a, b) =>
+              new Date(b.updated_at).getTime() -
+              new Date(a.updated_at).getTime()
+          );
+      });
 
       setMessages((prev) => {
         const container = scrollContainerRef.current;
@@ -66,7 +89,7 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
           container.scrollHeight - container.scrollTop <=
             container.clientHeight + 50;
 
-        const next = [...prev, result.data.data];
+        const next = [...prev, newMessage];
 
         setTimeout(() => {
           if (isAlreadyAtBottom && messagesEndRef.current) {
@@ -190,11 +213,17 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
     conversation &&
     conversation.participants.find((p) => p.user.username !== user?.username);
 
-  on("incoming-message", (payload) => {
-    console.log("Received incoming message:", payload);
+  on("incoming-message", (payload: { message: Message }) => {
+    const message = payload.message;
+
+    if (message.senderId !== otherParticipant?.user.id) {
+      return;
+    }
+
+    setIsTyping(false);
 
     setMessages((prev) => {
-      const exists = prev.some((msg) => msg.id === payload.id);
+      const exists = prev.some((msg) => msg.id === message.id);
 
       if (exists) {
         return prev;
@@ -214,8 +243,26 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
         setAutoScrollEnabled(false);
       }
 
-      return [...prev, payload];
+      return [...prev, message];
     });
+  });
+
+  on("typing", (payload: { from: string; data: { isTyping: boolean } }) => {
+    if (
+      payload.from === otherParticipant?.user.clerk_id &&
+      payload.data?.isTyping
+    ) {
+      setIsTyping(true);
+
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      typingTimeoutRef.current = setTimeout(() => {
+        setIsTyping(false);
+        typingTimeoutRef.current = null;
+      }, 1500);
+    }
   });
 
   return (
@@ -231,117 +278,62 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
       )}
 
       {conversation && (
-        <>
-          <div className="flex flex-col h-screen max-lg:h-[calc(100vh-64px)]">
-            <div className="sticky top-0 border-b border-foreground-100 px-4 py-2 z-50 backdrop-blur-md">
-              <div className="flex items-center gap-2">
-                <button onClick={() => router.back()}>
-                  <ArrowLeft size={20} />
-                </button>
-                <Link
-                  href={`/user/${otherParticipant?.user.username}`}
-                  className="flex gap-2 items-center"
-                >
-                  <Avatar
-                    src={otherParticipant?.user.profile_pict}
-                    alt="User Avatar"
+        <div className="flex flex-col h-screen max-lg:h-[calc(100vh-64px)]">
+          <ChatHeader otherParticipant={otherParticipant} />
+
+          <div
+            ref={scrollContainerRef}
+            className="flex flex-col p-4 w-full h-full overflow-y-auto"
+            onScroll={handleScroll}
+          >
+            <UserBanner otherParticipant={otherParticipant || undefined} />
+
+            {loadingMore && (
+              <div className="flex justify-center my-2">
+                <Spinner size="sm" />
+              </div>
+            )}
+
+            {initialLoadComplete && (
+              <div ref={topRef} className="h-px w-full" />
+            )}
+
+            {messages.map((message, index) => {
+              const currentDate = new Date(message.created_at);
+              const previousMessage = messages[index - 1];
+              const previousDate = previousMessage
+                ? new Date(previousMessage.created_at)
+                : null;
+
+              const showDate =
+                !previousDate || !isSameDay(currentDate, previousDate);
+
+              return (
+                <React.Fragment key={message.id}>
+                  {showDate && (
+                    <div className="text-center text-xs text-foreground-500 my-2">
+                      {format(currentDate, "d MMMM yyyy")}
+                    </div>
+                  )}
+                  <ChatBubble
+                    content={message.content}
+                    created_at={message.created_at}
+                    isSender={message.sender.username === user?.username}
                   />
-                  <span className="font-semibold">
-                    {otherParticipant?.user.first_name}{" "}
-                    {otherParticipant?.user.last_name}
-                  </span>
-                </Link>
-              </div>
-            </div>
+                </React.Fragment>
+              );
+            })}
 
-            <div
-              ref={scrollContainerRef}
-              className="flex flex-col p-4 w-full h-full overflow-y-auto"
-              onScroll={handleScroll}
-            >
-              <div className="flex flex-col items-center w-full gap-2 pb-4 border-b-1 border-foreground-100">
-                <Avatar
-                  src={otherParticipant?.user.profile_pict}
-                  alt="User Avatar"
-                  size="lg"
-                />
-                <span className="flex flex-col items-center font-semibold">
-                  {otherParticipant?.user.first_name}{" "}
-                  {otherParticipant?.user.last_name}
-                  <span className="text-sm font-normal text-foreground-500">
-                    @{otherParticipant?.user.username}
-                  </span>
-                </span>
-                <Button
-                  as={Link}
-                  href={`/user/${otherParticipant?.user.username}`}
-                  size="sm"
-                  variant="bordered"
-                >
-                  View profile
-                </Button>
-              </div>
+            {isTyping && <TypingIndicator />}
 
-              {loadingMore && (
-                <div className="flex justify-center my-2">
-                  <Spinner size="sm" />
-                </div>
-              )}
-
-              {initialLoadComplete && (
-                <div ref={topRef} className="h-px w-full" />
-              )}
-
-              {messages.map((message, index) => {
-                const currentDate = new Date(message.created_at);
-                const previousMessage = messages[index - 1];
-                const previousDate = previousMessage
-                  ? new Date(previousMessage.created_at)
-                  : null;
-
-                const showDate =
-                  !previousDate || !isSameDay(currentDate, previousDate);
-
-                return (
-                  <React.Fragment key={message.id}>
-                    {showDate && (
-                      <div className="text-center text-xs text-foreground-500 my-2">
-                        {format(currentDate, "d MMMM yyyy")}
-                      </div>
-                    )}
-                    <ChatBubble
-                      content={message.content}
-                      created_at={message.created_at}
-                      isSender={message.sender.username === user?.username}
-                    />
-                  </React.Fragment>
-                );
-              })}
-
-              <div ref={messagesEndRef} />
-            </div>
-
-            <div className="sticky bottom-0 border-t border-foreground-100 px-4 py-2 bg-background">
-              <div className="flex gap-2">
-                <Textarea
-                  variant="bordered"
-                  minRows={1}
-                  classNames={{
-                    inputWrapper: "border-1",
-                  }}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                />
-                <button
-                  className="text-foreground hover:text-primary"
-                  onClick={handleSendMessage}
-                >
-                  <SendHorizonal size={20} />
-                </button>
-              </div>
-            </div>
+            <div ref={messagesEndRef} />
           </div>
-        </>
+
+          <ChatInput
+            targetUser={otherParticipant}
+            handleSendMessage={(message) => handleSendMessage(message)}
+          />
+        </div>
       )}
     </>
   );

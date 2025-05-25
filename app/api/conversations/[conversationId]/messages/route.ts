@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { getUserByClerkId } from "@/services/user";
 import {
+  createConversation,
   getMessagesByConversationId,
   getOtherUserInConversation,
   sendMessage,
@@ -100,12 +101,20 @@ export async function POST(
       currentUserId: user.id,
     });
 
-    await axios.post(process.env.SOCKET_WEBHOOK_BASE_URI!, {
-      secret: process.env.SOCKET_WEBHOOK_SECRET,
-      event: "incoming-message",
-      userId: otherUser?.clerk_id,
-      data: newMessage,
+    const conversation = await createConversation({
+      userIds: [user.id, otherUser?.id!],
     });
+
+    try {
+      await axios.post(process.env.SOCKET_WEBHOOK_BASE_URI!, {
+        secret: process.env.SOCKET_WEBHOOK_SECRET,
+        event: "incoming-message",
+        userId: otherUser?.clerk_id,
+        data: { conversation: conversation, message: newMessage },
+      });
+    } catch (error) {
+      console.log("Error: Failed sending socket webhook ", error);
+    }
 
     return NextResponse.json(
       { message: "Success send message", data: newMessage },
