@@ -79,8 +79,6 @@ export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
       const freshToken = await getFreshToken();
       if (freshToken) {
         newSocket.auth = { token: freshToken };
-      } else {
-        console.warn("No fresh token available during reconnect");
       }
     });
 

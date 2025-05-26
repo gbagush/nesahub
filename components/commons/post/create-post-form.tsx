@@ -146,6 +146,7 @@ export const CreatePostForm = ({
                         bio: "AI assistant from Nesahub",
                         gender: "NOT_SET",
                         created_at: new Date().toISOString(),
+                        clerk_id: "",
                       });
                     }
 

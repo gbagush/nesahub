@@ -1,3 +1,5 @@
+import { ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 import type { Post } from "@/types/post";
 
 export const serializePost = (postData: any): Post => {
@@ -15,3 +17,7 @@ export const serializePost = (postData: any): Post => {
     ai_bot_id: postData.ai_bot_id ?? undefined,
   };
 };
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}

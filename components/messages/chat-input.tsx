@@ -4,6 +4,7 @@ import { Participant } from "@/types/conversation";
 import { Textarea } from "@heroui/input";
 import { SendHorizonal } from "lucide-react";
 import { useState, useRef } from "react";
+import { ChatEmojiPopover } from "./chat-emoji-popover";
 
 export const ChatInput = ({
   targetUser,
@@ -52,6 +53,9 @@ export const ChatInput = ({
   return (
     <div className="sticky bottom-0 border-t border-foreground-100 px-4 py-2 bg-background">
       <div className="flex gap-2">
+        <ChatEmojiPopover
+          onEmojiClick={(emoji) => setMessage((prev) => prev + emoji)}
+        />
         <Textarea
           variant="bordered"
           minRows={1}

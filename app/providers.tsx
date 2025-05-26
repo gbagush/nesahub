@@ -11,6 +11,7 @@ import {
 import { ClerkProvider } from "@clerk/nextjs";
 import { HeroUIProvider } from "@heroui/system";
 import { ToastProvider } from "@heroui/toast";
+import { SocketProvider } from "@/providers/socket-provider";
 
 export interface ProvidersProps {
   children: React.ReactNode;
@@ -30,12 +31,14 @@ export function Providers({ children, themeProps }: ProvidersProps) {
 
   return (
     <ClerkProvider>
-      <HeroUIProvider navigate={router.push}>
-        <NextThemesProvider {...themeProps}>
-          <ToastProvider />
-          {children}
-        </NextThemesProvider>
-      </HeroUIProvider>
+      <SocketProvider>
+        <HeroUIProvider navigate={router.push}>
+          <NextThemesProvider {...themeProps}>
+            <ToastProvider />
+            {children}
+          </NextThemesProvider>
+        </HeroUIProvider>
+      </SocketProvider>
     </ClerkProvider>
   );
 }

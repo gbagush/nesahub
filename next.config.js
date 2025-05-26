@@ -10,6 +10,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "nhdevcdn.zeth.biz.id",
       },
+      {
+        protocol: "https",
+        hostname: "usercontent.nesahub.web.id",
+      },
     ],
   },
 };

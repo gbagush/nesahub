@@ -6,7 +6,8 @@ import PoweredByGiphy from "@/public/powered-by-giphy.png";
 
 import { Input } from "@heroui/input";
 import { Popover, PopoverTrigger, PopoverContent } from "@heroui/popover";
-import { ImagePlay, Search } from "lucide-react";
+import { Search } from "lucide-react";
+import { IconGif } from "@tabler/icons-react";
 import { Spinner } from "@heroui/spinner";
 
 export const GifPopover = ({
@@ -61,7 +62,7 @@ export const GifPopover = ({
     >
       <PopoverTrigger>
         <button>
-          <ImagePlay size={20} />
+          <IconGif />
         </button>
       </PopoverTrigger>
 
