@@ -5,6 +5,7 @@ import Image from "next/image";
 
 import { SignInButton, useClerk, useUser } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
+import { usePathname } from "next/navigation";
 
 import { Button } from "@heroui/button";
 import {
@@ -31,36 +32,55 @@ import { dark } from "@clerk/themes";
 export const Sidebar = () => {
   const { isSignedIn, user } = useUser();
 
+  const path = usePathname();
+
+  const menus = [
+    {
+      title: "Home",
+      icon: <Home size={24} strokeWidth={path === `/home` ? 3 : 2} />,
+      href: "/home",
+    },
+    {
+      title: "Explore",
+      icon: <Search size={24} strokeWidth={path === `/search` ? 3 : 2} />,
+      href: "/search",
+    },
+    {
+      title: "Messages",
+      icon: <Mail size={24} strokeWidth={path === `/messages` ? 3 : 2} />,
+      href: "/messages",
+    },
+    {
+      title: "Saved",
+      icon: <Bookmark size={24} strokeWidth={path === `/saved` ? 3 : 2} />,
+      href: "/saved",
+    },
+  ];
+
   return (
     <nav className="hidden fixed md:flex md:flex-col p-4 h-screen overflow-y-auto">
       <Image
-        src={Logo}
         alt="Logo"
         className="w-8 h-8 mb-4 ml-3 invert dark:invert-0"
+        src={Logo}      
       />
 
       <div className="flex flex-col gap-2 w-full">
-        <SidebarItem icon={<Home size={24} />} title="Home" href="/home" />
-        <SidebarItem
-          icon={<Search size={24} />}
-          title="Explore"
-          href="/search"
-        />
-        <SidebarItem
-          icon={<Mail size={24} />}
-          title="Messages"
-          href="/messages"
-        />
-        <SidebarItem
-          icon={<Bookmark size={24} />}
-          title="Saved Posts"
-          href="/saved"
-        />
+        {menus.map((menu) => (
+          <SidebarItem
+            key={menu.title}
+            icon={menu.icon}
+            title={menu.title}
+            href={menu.href}
+            isActive={path === menu.href}
+          />
+        ))}
         {isSignedIn && (
           <SidebarItem
-            icon={<UserIcon size={24} />}
+            icon={<UserIcon size={24} strokeWidth={path === `/user/${user.username}` ? 3 : 2} />}
             title="Profile"
             href={`/user/${user.username}`}
+            isActive={path === `/user/${user.username}`}
           />
         )}
       </div>
@@ -84,7 +104,7 @@ export const SidebarItem = ({
   return (
     <Link
       href={href}
-      className={`flex items-center py-2 px-4 gap-4 rounded-full hover:bg-foreground-100 ${isActive && ""}`}
+      className={`flex items-center py-2 px-4 gap-4 rounded-full hover:bg-foreground-100 ${isActive && "font-semibold"}`}
     >
       {icon}
       <span className="text-lg">{title}</span>
