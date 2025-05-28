@@ -7,7 +7,6 @@ const { clerkMiddleware } = require("@clerk/express");
 
 const authenticateSocket = require("./lib/clerk");
 const { ALLOWED_RELAY_EVENTS, ALLOWED_WEBHOOK_EVENTS } = require("./config");
-const { log } = require("./lib/utils");
 
 const app = express();
 const server = http.createServer(app);
@@ -28,8 +27,8 @@ io.on("connection", (socket) => {
   const { userId, sessionId } = socket.auth;
   connectedUsers.set(socket.id, { userId, sessionId, socketId: socket.id });
 
-  log(`🚀 Connected: ${userId} (${socket.id})`);
-  log(`👥 Active Connections: ${connectedUsers.size}`);
+  console.log(`🚀 Connected: ${userId} (${socket.id})`);
+  console.log(`👥 Active Connections: ${connectedUsers.size}`);
 
   socket.onAny((event, payload) => {
     if (!ALLOWED_RELAY_EVENTS.includes(event)) return;
@@ -52,8 +51,8 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     connectedUsers.delete(socket.id);
-    log(`❌ Disconnected: ${userId} (${socket.id})`);
-    log(`👥 Active Connections: ${connectedUsers.size}`);
+    console.log(`❌ Disconnected: ${userId} (${socket.id})`);
+    console.log(`👥 Active Connections: ${connectedUsers.size}`);
   });
 });
 
@@ -98,5 +97,5 @@ app.post("/webhook", (req, res) => {
 });
 
 server.listen(PORT, () => {
-  log(`✅ Server running at http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}`);
 });
