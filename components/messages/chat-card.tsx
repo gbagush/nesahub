@@ -6,12 +6,13 @@ import type { Conversation, Participant } from "@/types/conversation";
 export const ChatCard = ({
   conversation,
   otherParticipant,
+  isUnread = false,
 }: {
   conversation: Conversation;
   otherParticipant: Participant;
+  isUnread?: boolean;
 }) => {
   const latestMessage = conversation.messages[0];
-  const isUnread = latestMessage?.senderId === otherParticipant.userId;
 
   return (
     <Link

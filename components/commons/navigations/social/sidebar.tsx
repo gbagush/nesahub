@@ -37,22 +37,28 @@ export const Sidebar = () => {
   const menus = [
     {
       title: "Home",
-      icon: <Home size={24} strokeWidth={path === `/home` ? 3 : 2} />,
+      icon: <Home size={24} strokeWidth={path.startsWith("/home") ? 3 : 2} />,
       href: "/home",
     },
     {
       title: "Explore",
-      icon: <Search size={24} strokeWidth={path === `/search` ? 3 : 2} />,
+      icon: (
+        <Search size={24} strokeWidth={path.startsWith("/search") ? 3 : 2} />
+      ),
       href: "/search",
     },
     {
       title: "Messages",
-      icon: <Mail size={24} strokeWidth={path === `/messages` ? 3 : 2} />,
+      icon: (
+        <Mail size={24} strokeWidth={path.startsWith("/messages") ? 3 : 2} />
+      ),
       href: "/messages",
     },
     {
       title: "Saved",
-      icon: <Bookmark size={24} strokeWidth={path === `/saved` ? 3 : 2} />,
+      icon: (
+        <Bookmark size={24} strokeWidth={path.startsWith("/saved") ? 3 : 2} />
+      ),
       href: "/saved",
     },
   ];
@@ -62,7 +68,7 @@ export const Sidebar = () => {
       <Image
         alt="Logo"
         className="w-8 h-8 mb-4 ml-3 invert dark:invert-0"
-        src={Logo}      
+        src={Logo}
       />
 
       <div className="flex flex-col gap-2 w-full">
@@ -72,15 +78,20 @@ export const Sidebar = () => {
             icon={menu.icon}
             title={menu.title}
             href={menu.href}
-            isActive={path === menu.href}
+            isActive={path.startsWith(menu.href)}
           />
         ))}
         {isSignedIn && (
           <SidebarItem
-            icon={<UserIcon size={24} strokeWidth={path === `/user/${user.username}` ? 3 : 2} />}
+            icon={
+              <UserIcon
+                size={24}
+                strokeWidth={path.startsWith(`/user/${user.username}`) ? 3 : 2}
+              />
+            }
             title="Profile"
             href={`/user/${user.username}`}
-            isActive={path === `/user/${user.username}`}
+            isActive={path.startsWith(`/user/${user.username}`)}
           />
         )}
       </div>

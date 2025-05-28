@@ -89,7 +89,7 @@ export const ChatList = ({ className = "" }: { className?: string }) => {
 
   return (
     <div
-      className={`flex flex-col gap-4 w-full lg:w-2/5 lg:border-l lg:border-foreground-100 pb-[72px] lg:pb-0 p-4 ${className}`}
+      className={`flex flex-col gap-4 w-full lg:w-2/5 lg:border-l lg:border-foreground-100 pb-[72px] lg:pb-0 p-4 overflow-y-auto ${className}`}
     >
       <h4 className="font-semibold text-xl">Messages</h4>
 
@@ -126,13 +126,24 @@ export const ChatList = ({ className = "" }: { className?: string }) => {
               (p) => p.user.username !== user?.username
             );
 
-            if (!otherParticipant) return null;
+            const currentUserParticipant = conversation.participants.find(
+              (p) => p.user.username === user?.username
+            );
+
+            if (!otherParticipant || !currentUserParticipant) return null;
 
             return (
               <ChatCard
                 key={conversation.id}
                 conversation={conversation}
                 otherParticipant={otherParticipant}
+                isUnread={
+                  conversation.messages.length > 0 &&
+                  conversation.messages[0].senderId ===
+                    otherParticipant.user.id &&
+                  new Date(currentUserParticipant.last_read_at) <
+                    new Date(conversation.messages[0].created_at)
+                }
               />
             );
           })}

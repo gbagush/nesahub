@@ -273,3 +273,23 @@ export const editMessage = async ({
 
   return updated;
 };
+
+export const markConversationAsRead = async ({
+  conversationId,
+  userId,
+}: {
+  conversationId: number;
+  userId: number;
+}) => {
+  return await db.conversationParticipant.update({
+    where: {
+      conversationId_userId: {
+        conversationId,
+        userId,
+      },
+    },
+    data: {
+      last_read_at: new Date(),
+    },
+  });
+};

@@ -10,9 +10,7 @@ import { useSocket } from "@/providers/socket-provider";
 import { useConversations } from "@/stores/conversations";
 
 import { addToast } from "@heroui/toast";
-import { SendHorizonal } from "lucide-react";
 import { Spinner } from "@heroui/spinner";
-import { Textarea } from "@heroui/input";
 
 import { ChatBubble } from "./chat-bubble";
 import { UserBanner } from "./user-banner";
@@ -45,8 +43,13 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const updateReadRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const { on } = useSocket();
+  const otherParticipant =
+    conversation &&
+    conversation.participants.find((p) => p.user.username !== user?.username);
+
+  const { on, off, emit } = useSocket();
 
   const [topRef, topInView] = useInView({
     threshold: 0.5,
@@ -105,6 +108,23 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
         color: "danger",
       });
     }
+  };
+
+  const updateRead = () => {
+    if (updateReadRef.current) clearTimeout(updateReadRef.current);
+
+    updateReadRef.current = setTimeout(async () => {
+      try {
+        await axios.post(`/api/conversations/${conversationId}/read`);
+
+        emit("read", {
+          userId: otherParticipant?.user.clerk_id,
+          data: { lastRead: new Date() },
+        });
+      } catch (error) {
+        console.error("Failed to mark conversation as read:", error);
+      }
+    }, 1000);
   };
 
   const getConversationDetail = async () => {
@@ -209,61 +229,109 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
     }
   };
 
-  const otherParticipant =
-    conversation &&
-    conversation.participants.find((p) => p.user.username !== user?.username);
+  useEffect(() => {
+    const incomingMessageHandler = (payload: { message: Message }) => {
+      const message = payload.message;
 
-  on("incoming-message", (payload: { message: Message }) => {
-    const message = payload.message;
-
-    if (message.senderId !== otherParticipant?.user.id) {
-      return;
-    }
-
-    setIsTyping(false);
-
-    setMessages((prev) => {
-      const exists = prev.some((msg) => msg.id === message.id);
-
-      if (exists) {
-        return prev;
+      if (message.senderId !== otherParticipant?.user.id) {
+        return;
       }
 
-      const container = scrollContainerRef.current;
-      const isAlreadyAtBottom =
-        container &&
-        container.scrollHeight - container.scrollTop <=
-          container.clientHeight + 50;
+      setIsTyping(false);
+      updateRead();
 
-      if (isAlreadyAtBottom && messagesEndRef.current) {
-        setTimeout(() => {
-          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        }, 0);
-      } else {
-        setAutoScrollEnabled(false);
+      setMessages((prev) => {
+        const exists = prev.some((msg) => msg.id === message.id);
+
+        if (exists) {
+          return prev;
+        }
+
+        const container = scrollContainerRef.current;
+        const isAlreadyAtBottom =
+          container &&
+          container.scrollHeight - container.scrollTop <=
+            container.clientHeight + 50;
+
+        if (isAlreadyAtBottom && messagesEndRef.current) {
+          setTimeout(() => {
+            messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+          }, 0);
+        } else {
+          setAutoScrollEnabled(false);
+        }
+
+        return [...prev, message];
+      });
+    };
+
+    const typingHandler = (payload: {
+      from: string;
+      data: { isTyping: boolean };
+    }) => {
+      if (
+        payload.from === otherParticipant?.user.clerk_id &&
+        payload.data?.isTyping
+      ) {
+        setIsTyping(true);
+
+        if (typingTimeoutRef.current) {
+          clearTimeout(typingTimeoutRef.current);
+        }
+
+        typingTimeoutRef.current = setTimeout(() => {
+          setIsTyping(false);
+          typingTimeoutRef.current = null;
+        }, 1500);
       }
+    };
 
-      return [...prev, message];
-    });
-  });
+    const readHandler = (payload: {
+      from: string;
+      data: { lastRead: string };
+    }) => {
+      setConversation((prev) => {
+        if (!prev) return prev;
 
-  on("typing", (payload: { from: string; data: { isTyping: boolean } }) => {
-    if (
-      payload.from === otherParticipant?.user.clerk_id &&
-      payload.data?.isTyping
-    ) {
-      setIsTyping(true);
+        const updatedParticipants = prev.participants.map((participant) => {
+          if (participant.user.clerk_id === payload.from) {
+            return {
+              ...participant,
+              last_read_at: payload.data.lastRead,
+            };
+          }
+          return participant;
+        });
+
+        return {
+          ...prev,
+          participants: updatedParticipants,
+        };
+      });
+    };
+
+    on("incoming-message", incomingMessageHandler);
+    on("typing", typingHandler);
+    on("read", readHandler);
+
+    return () => {
+      off("incoming-message", incomingMessageHandler);
+      off("typing", typingHandler);
+      off("read", readHandler);
 
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
-      }
-
-      typingTimeoutRef.current = setTimeout(() => {
-        setIsTyping(false);
         typingTimeoutRef.current = null;
-      }, 1500);
+      }
+    };
+  }, [conversationId, otherParticipant, on, off]);
+
+  useEffect(() => {
+    if (otherParticipant?.user?.clerk_id) {
+      console.log("read it");
+      updateRead();
     }
-  });
+  }, [otherParticipant?.user?.clerk_id]);
 
   return (
     <>
@@ -319,6 +387,7 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
                     content={message.content}
                     created_at={message.created_at}
                     isSender={message.sender.username === user?.username}
+                    isRead={message.created_at < otherParticipant?.last_read_at}
                   />
                 </React.Fragment>
               );
