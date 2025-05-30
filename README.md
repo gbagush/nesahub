@@ -36,13 +36,19 @@ This guide will walk you through deploying the Nesahub application using Docker 
     nano .env         # configure again for socket-server
     ```
 
-4.  **Build and run the application**
+4.  **Create loki network**
+
+    ```bash
+    docker network create loki
+    ```
+
+5.  **Build and run the application**
 
     ```bash
     docker-compose up --build
     ```
 
-5.  **Run in detached/background mode**
+6.  **Run in detached/background mode**
     ```bash
     docker-compose up -d
     ```
