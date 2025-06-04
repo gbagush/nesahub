@@ -17,6 +17,7 @@ model User {
   profile_pict  String
   bio           String?
   gender        Gender         @default(NOT_SET)
+  role          UserRole       @default(USER)
   created_at    DateTime       @default(now())
   updated_at    DateTime       @updatedAt
   banned_until  DateTime?
@@ -33,6 +34,12 @@ model User {
 
   conversations ConversationParticipant[] @relation("UserConversations")
   sent_messages Message[]                 @relation("UserMessages")
+ 
+  post_reports  PostReport[] @relation("ReportAuthor")
+  processed_reports  PostReport[] @relation("ReportProcessor")
+
+  moderated_actions    ModeratorActionLog[] @relation("UserModeratedActions")
+  moderation_targets   ModeratorActionLog[] @relation("UserModerationTargets")
 
   @@map("users")
 }
@@ -59,6 +66,10 @@ model Post {
   disliked_by   PostDislike[]  @relation("PostToUserDislikes")
   reposted_by   PostRepost[]   @relation("PostToUserReposts")
   saved_by      PostSave[]     @relation("PostToUserSaves")
+
+  reports PostReport[]
+
+  moderation_logs ModeratorActionLog[] @relation("PostModeratedActions")
 
   @@map("posts")
 }
@@ -145,6 +156,25 @@ model PostSave {
   @@id([postId, userId])
 }
 
+model PostReport {
+  id              Int             @id @default(autoincrement())
+  post            Post            @relation(fields: [postId], references: [id])
+  postId          Int
+  user            User            @relation("ReportAuthor", fields: [userId], references: [id])
+  userId          Int
+  category        ReportCategory
+  reason          String?         @db.Text
+  status          ReportStatus    @default(PENDING)
+
+  processed_by_id Int?
+  processed_by    User?           @relation("ReportProcessor", fields: [processed_by_id], references: [id])
+
+  created_at      DateTime        @default(now())
+
+  @@unique([postId, userId])
+  @@map("post_reports")
+}
+
 model Conversation {
   id            Int             @id @default(autoincrement())
   is_group      Boolean         @default(false)
@@ -184,6 +214,27 @@ model Message {
   @@map("messages")
 }
 
+model ModeratorActionLog {
+  id              Int              @id @default(autoincrement())
+  moderator       User            @relation("UserModeratedActions", fields: [moderator_id], references: [id])
+  moderator_id    Int
+
+  action          ModerationAction
+  violation_type  ReportCategory
+
+  target_post     Post?           @relation("PostModeratedActions", fields: [post_id], references: [id])
+  post_id         Int?
+
+  target_user     User?           @relation("UserModerationTargets", fields: [target_user_id], references: [id])
+  target_user_id  Int?
+
+  reason          String?         @db.Text
+  created_at      DateTime        @default(now())
+
+  @@map("moderator_logs")
+}
+
+
 enum MediaSource {
   USERCONTENT
   GIPHY
@@ -193,4 +244,32 @@ enum Gender {
   MALE
   FEMALE
   NOT_SET
+}
+
+enum ReportCategory {
+  SPAM
+  HARASSMENT
+  FALSE_INFORMATION
+  HATE_SPEECH
+  NUDITY
+  VIOLENCE
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  REVIEWED
+  DISMISSED
+}
+
+enum UserRole {
+  USER
+  MODERATOR
+  SUPERUSER
+}
+
+enum ModerationAction {
+  DELETE_POST
+  BAN_USER
+  UNBAN_USER
 }

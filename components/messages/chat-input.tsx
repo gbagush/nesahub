@@ -63,6 +63,7 @@ export const ChatInput = ({
           value={message}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          maxLength={500}
         />
         <button className="text-foreground hover:text-primary" onClick={send}>
           <SendHorizonal size={20} />

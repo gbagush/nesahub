@@ -90,6 +90,13 @@ export async function POST(
       );
     }
 
+    if (content.length > 500) {
+      return NextResponse.json(
+        { message: "Message content must be at most 500 characters" },
+        { status: 400 }
+      );
+    }
+
     const newMessage = await sendMessage({
       conversationId,
       senderId: user.id,

@@ -13,10 +13,13 @@ import {
   Bot,
   Dot,
   Ellipsis,
+  Flag,
+  MessageSquareWarning,
   MessagesSquare,
   Pencil,
   Repeat2,
   Share,
+  ShieldMinus,
   ThumbsDown,
   ThumbsUp,
   Trash,
@@ -26,6 +29,10 @@ import { Popover, PopoverTrigger, PopoverContent } from "@heroui/popover";
 import { MediaCard } from "./media-card";
 
 import type { Post } from "@/types/post";
+import { PostReportModal } from "./post-report-modal";
+import { useDisclosure } from "@heroui/modal";
+import { DeletePostModal } from "./post-delete-modal";
+import { PostModerateModal } from "./post-moderate-modal";
 
 export const PostCard = ({
   post: initialPost,
@@ -36,10 +43,15 @@ export const PostCard = ({
 }) => {
   const [post, setPost] = useState<Post>(initialPost);
   const [isDeleted, setIsDeleted] = useState(false);
+  const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
   const { author, aiBot, content, created_at, _count } = post;
 
   const { user } = useUser();
+
+  const reportModal = useDisclosure();
+  const deleteModal = useDisclosure();
+  const moderateModal = useDisclosure();
 
   const handleAction = async (
     action: "like" | "dislike" | "repost" | "save"
@@ -138,16 +150,6 @@ export const PostCard = ({
     }
   };
 
-  const handleDeletePost = async () => {
-    try {
-      await axios.delete(`/api/posts/${post.id}`);
-      addToast({ description: "Post deleted successfully.", color: "success" });
-      setIsDeleted(true);
-    } catch (error) {
-      addToast({ description: "Failed to delete post.", color: "danger" });
-    }
-  };
-
   const handleFollowUser = async () => {
     try {
       await axios.post(`/api/users/${post.author?.username}/follow`);
@@ -158,6 +160,8 @@ export const PostCard = ({
   };
 
   const media = post.media ?? [];
+
+  console.log(user?.publicMetadata.role);
 
   return (
     <div
@@ -191,8 +195,12 @@ export const PostCard = ({
                 {formatDistanceToNow(new Date(created_at))}
               </span>
             </Link>
-            {author && !isDeleted && (
-              <Popover placement="bottom-end">
+            {!isDeleted && (
+              <Popover
+                placement="bottom-end"
+                isOpen={isPopoverOpen}
+                onOpenChange={setIsPopoverOpen}
+              >
                 <PopoverTrigger>
                   <button>
                     <Ellipsis
@@ -213,18 +221,53 @@ export const PostCard = ({
                         </Link>
                         <button
                           className="flex items-center gap-4 p-2 rounded-lg hover:bg-foreground-100"
-                          onClick={handleDeletePost}
+                          onClick={() => {
+                            deleteModal.onOpenChange();
+                            setIsPopoverOpen(false);
+                          }}
                         >
                           <Trash size={16} /> Delete post
                         </button>
                       </>
                     ) : (
+                      author && (
+                        <>
+                          <button
+                            className="flex items-center gap-4 p-2 rounded-lg hover:bg-foreground-100"
+                            onClick={handleFollowUser}
+                          >
+                            <UserPlus size={16} /> Follow @{author?.username}
+                          </button>
+                        </>
+                      )
+                    )}
+                    <button
+                      className="flex items-center gap-4 p-2 rounded-lg hover:bg-foreground-100"
+                      onClick={() => {
+                        reportModal.onOpenChange();
+                        setIsPopoverOpen(false);
+                      }}
+                    >
+                      <Flag size={16} /> Report post
+                    </button>
+                    {(user?.publicMetadata?.role === "SUPERUSER" ||
+                      user?.publicMetadata?.role === "MODERATOR") && (
                       <>
+                        <Link
+                          href={`/dashboard/post-reports/${post.id}`}
+                          target="_blank"
+                          className="flex items-center gap-4 p-2 rounded-lg hover:bg-foreground-100 w-full"
+                        >
+                          <MessageSquareWarning size={16} /> Reports
+                        </Link>
                         <button
                           className="flex items-center gap-4 p-2 rounded-lg hover:bg-foreground-100"
-                          onClick={handleFollowUser}
+                          onClick={() => {
+                            moderateModal.onOpenChange();
+                            setIsPopoverOpen(false);
+                          }}
                         >
-                          <UserPlus size={16} /> Follow @{author?.username}
+                          <ShieldMinus size={16} /> Moderate this post
                         </button>
                       </>
                     )}
@@ -359,6 +402,31 @@ export const PostCard = ({
           </div>
         </div>
       </div>
+
+      <PostReportModal
+        isOpen={reportModal.isOpen}
+        onOpenChange={reportModal.onOpenChange}
+        postId={post.id}
+      />
+
+      {user && user.username === author?.username && (
+        <DeletePostModal
+          isOpen={deleteModal.isOpen}
+          onOpenChange={deleteModal.onOpenChange}
+          postId={post.id}
+          onDeleteSuccess={() => setIsDeleted(true)}
+        />
+      )}
+
+      {(user?.publicMetadata?.role === "SUPERUSER" ||
+        user?.publicMetadata?.role === "MODERATOR") && (
+        <PostModerateModal
+          isOpen={moderateModal.isOpen}
+          onOpenChange={moderateModal.onOpenChange}
+          postId={post.id}
+          onModerateSuccess={() => setIsDeleted(true)}
+        />
+      )}
     </div>
   );
 };

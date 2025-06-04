@@ -40,7 +40,7 @@ export default function RootLayout({
         )}
       >
         <Providers themeProps={{ attribute: "class", defaultTheme: "dark" }}>
-          <main>{children}</main>
+          <main className="bg-white dark:bg-neutral-950">{children}</main>
         </Providers>
       </body>
     </html>

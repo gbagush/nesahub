@@ -29,7 +29,7 @@ export const AISection = () => {
   const [isOXAAIPosted, setIsOXAAIPosted] = useState(false);
 
   return (
-    <div className="relative w-full bg-white dark:bg-black overflow-hidden">
+    <div className="relative w-full overflow-hidden">
       <div
         className={cn(
           "absolute inset-0 z-0",
@@ -38,7 +38,7 @@ export const AISection = () => {
           "dark:[background-image:radial-gradient(#404040_1px,transparent_1px)]"
         )}
       />
-      <div className="pointer-events-none absolute inset-0 z-10 bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] dark:bg-black"></div>
+      <div className="pointer-events-none absolute inset-0 z-10 bg-white [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)] dark:bg-neutral-950"></div>
 
       <div className="relative z-20 text-center mb-16 px-4">
         <Image
