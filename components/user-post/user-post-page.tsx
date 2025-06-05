@@ -29,6 +29,8 @@ export default function UserPostPage({
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
+  const [notFound, setNotFound] = useState(false);
+
   const { ref, inView } = useInView();
 
   const fetchPost = async () => {
@@ -36,11 +38,21 @@ export default function UserPostPage({
       const response = await axios.get(`/api/posts/${postId}`);
       setPost(response.data.data);
     } catch (error) {
-      addToast({
-        title: "Error",
-        description: "Failed to fetch post.",
-        color: "danger",
-      });
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          setNotFound(true);
+        } else {
+          addToast({
+            description: "Failed to fetch post.",
+            color: "danger",
+          });
+        }
+      } else {
+        addToast({
+          description: "An unexpected error occurred.",
+          color: "danger",
+        });
+      }
     }
   };
 
@@ -101,6 +113,15 @@ export default function UserPostPage({
       <Navbar title="Post" />
 
       {loading && page === 1 && <Spinner className="py-4" />}
+
+      {notFound && (
+        <NotFoundSection
+          page="Post"
+          title="Post not found"
+          description="The post you are looking for does not exist or is not authored by this user."
+          hideNavbar
+        />
+      )}
 
       {post && (
         <section className="flex flex-col items-center justify-center">

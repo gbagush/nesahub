@@ -10,6 +10,7 @@ export interface User {
   created_at: string;
   _count?: UserStats;
   is_followed?: boolean;
+  is_blocked?: boolean;
 }
 
 export interface UserStats {

@@ -71,15 +71,51 @@ export const getUsers = async ({
               },
             }
           : false,
+
+      blocked_by:
+        userId !== null
+          ? {
+              where: {
+                blocker_id: userId,
+              },
+              select: {
+                blocked_id: true,
+              },
+            }
+          : false,
     },
   });
 
   return users.map((user) => {
-    const { followers, ...rest } = user;
+    const { followers, blocked_by, ...rest } = user;
 
     return {
       ...rest,
       is_followed: Array.isArray(followers) && followers.length > 0,
+      is_blocked: !!blocked_by?.length,
     };
   });
+};
+
+export const isUserBlocked = async (
+  userIdA: number,
+  userIdB: number
+): Promise<boolean> => {
+  const block = await db.userBlock.findFirst({
+    where: {
+      OR: [
+        {
+          blocker_id: userIdA,
+          blocked_id: userIdB,
+        },
+        {
+          blocker_id: userIdB,
+          blocked_id: userIdA,
+        },
+      ],
+    },
+    select: { blocked_id: true },
+  });
+
+  return !!block;
 };

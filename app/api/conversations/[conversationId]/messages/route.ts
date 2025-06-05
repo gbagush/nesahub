@@ -2,11 +2,10 @@ import axios from "axios";
 
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
-import { getUserByClerkId } from "@/services/user";
+import { getUserByClerkId, isUserBlocked } from "@/services/user";
 import {
-  createConversation,
+  getConversationById,
   getMessagesByConversationId,
-  getOtherUserInConversation,
   sendMessage,
 } from "@/services/message";
 
@@ -97,26 +96,41 @@ export async function POST(
       );
     }
 
+    const conversation = await getConversationById({
+      conversationId: conversationId,
+    });
+
+    const otherParticipant = conversation?.participants.find(
+      (p) => p.user.id !== user.id
+    );
+
+    if (!otherParticipant) {
+      return NextResponse.json(
+        { message: "Other participant not found" },
+        { status: 400 }
+      );
+    }
+
+    const isBlocked = await isUserBlocked(user.id, otherParticipant.user.id);
+
+    if (isBlocked) {
+      return NextResponse.json(
+        { message: "You cant send message to this user" },
+        { status: 400 }
+      );
+    }
+
     const newMessage = await sendMessage({
       conversationId,
       senderId: user.id,
       content,
     });
 
-    const otherUser = await getOtherUserInConversation({
-      conversationId,
-      currentUserId: user.id,
-    });
-
-    const conversation = await createConversation({
-      userIds: [user.id, otherUser?.id!],
-    });
-
     try {
       await axios.post(process.env.SOCKET_WEBHOOK_BASE_URI!, {
         secret: process.env.SOCKET_WEBHOOK_SECRET,
         event: "incoming-message",
-        userId: otherUser?.clerk_id,
+        userId: otherParticipant.user.clerk_id,
         data: { conversation: conversation, message: newMessage },
       });
     } catch (error) {

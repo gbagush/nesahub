@@ -10,7 +10,20 @@ import { addToast } from "@heroui/toast";
 
 import { Avatar } from "@heroui/avatar";
 import { Button } from "@heroui/button";
-import { Calendar, Mail } from "lucide-react";
+import {
+  Ban,
+  Calendar,
+  EllipsisVertical,
+  Mail,
+  Share,
+  UserX,
+} from "lucide-react";
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+} from "@heroui/dropdown";
 import { Spinner } from "@heroui/spinner";
 
 import { PostCard } from "../commons/post/post-card";
@@ -24,6 +37,7 @@ import { NotFoundSection } from "../commons/navigations/social/not-found-section
 import { EditProfileModal } from "./edit-profile-modal";
 
 import type { Conversation } from "@/types/conversation";
+import { useRouter } from "next/navigation";
 
 const LIMIT = 10;
 
@@ -38,7 +52,7 @@ export const UserProfilePage = ({
 
   const [loading, setLoading] = useState(true);
 
-  const { user } = useUser();
+  const [notFound, setNotFound] = useState(false);
 
   const fetchUserData = async () => {
     setLoading(true);
@@ -48,11 +62,21 @@ export const UserProfilePage = ({
 
       setUserData(response.data?.data);
     } catch (error) {
-      addToast({
-        title: "Error",
-        description: "Failed to fetch user data",
-        color: "danger",
-      });
+      if (axios.isAxiosError(error)) {
+        if (error.response?.status === 404) {
+          setNotFound(true);
+        } else {
+          addToast({
+            description: "Failed to fetch user data",
+            color: "danger",
+          });
+        }
+      } else {
+        addToast({
+          description: "An unexpected error occurred.",
+          color: "danger",
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -70,12 +94,24 @@ export const UserProfilePage = ({
         <Navbar title={`${userData.first_name} ${userData.last_name}`} />
       )}
 
+      {notFound && (
+        <NotFoundSection
+          page="User"
+          title="User not found"
+          description="The user you are looking for does not exist."
+        />
+      )}
+
       <section className="flex flex-col items-center justify-center">
         {userData && (
           <>
             <UserProfileHeader userData={userData} />
-            {tab === "posts" && <UserPosts userData={userData} />}
-            {tab === "reposts" && <UserReposts userData={userData} />}
+            {!userData.is_blocked && tab === "posts" && (
+              <UserPosts userData={userData} />
+            )}
+            {!userData.is_blocked && tab === "reposts" && (
+              <UserReposts userData={userData} />
+            )}
           </>
         )}
       </section>
@@ -92,6 +128,8 @@ export const UserProfileHeader = ({
   const [conversation, setConversation] = useState<Conversation>();
 
   const { isSignedIn, user } = useUser();
+
+  const router = useRouter();
 
   const handleFollow = async () => {
     if (!isSignedIn) return;
@@ -120,7 +158,6 @@ export const UserProfileHeader = ({
       }
     } catch (error) {
       addToast({
-        title: "Error",
         description: `Failed to ${userData.is_followed ? "unfollow" : "follow"} the user.`,
         color: "danger",
       });
@@ -140,8 +177,40 @@ export const UserProfileHeader = ({
       setConversation(response.data?.data);
     } catch (error) {
       addToast({
-        title: "Error",
         description: "Failed to fetch user data",
+        color: "danger",
+      });
+    }
+  };
+
+  const handleBlockUser = async () => {
+    try {
+      if (userData.is_blocked) {
+        await axios.delete(`/api/users/${userData.username}/block`);
+
+        addToast({
+          description: "You've successfully unblocked this user.",
+          color: "success",
+        });
+
+        setTimeout(() => {
+          location.reload();
+        }, 1000);
+      } else {
+        await axios.post(`/api/users/${userData.username}/block`);
+
+        addToast({
+          description: "You've successfully blocked this user.",
+          color: "success",
+        });
+
+        setTimeout(() => {
+          location.reload();
+        }, 1000);
+      }
+    } catch (error) {
+      addToast({
+        description: "Failed to update block status. Please try again.",
         color: "danger",
       });
     }
@@ -152,7 +221,9 @@ export const UserProfileHeader = ({
   }, [user]);
 
   return (
-    <div className="flex flex-col w-full justify-start border-b border-foreground-200">
+    <div
+      className={`flex flex-col w-full justify-start ${!userData.is_blocked && "border-b border-foreground-200"}`}
+    >
       <div className="p-4">
         <Avatar
           src={userData.profile_pict}
@@ -176,6 +247,35 @@ export const UserProfileHeader = ({
 
           {isSignedIn && user.username !== userData.username ? (
             <div className="flex gap-2 items-center">
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button variant="ghost" radius="full" isIconOnly>
+                    <EllipsisVertical size={16} />
+                  </Button>
+                </DropdownTrigger>
+
+                <DropdownMenu aria-label="Static Actions">
+                  <DropdownItem
+                    key="share"
+                    startContent={<Share size={16} />}
+                    onPress={() => {
+                      navigator.share?.({
+                        title: `${userData.first_name} ${userData.last_name} on Nesahub`,
+                        url: `${process.env.NEXT_PUBLIC_APP_URL}/user/${userData.username}`,
+                      });
+                    }}
+                  >
+                    Share profile
+                  </DropdownItem>
+                  <DropdownItem
+                    key="block"
+                    startContent={<UserX size={16} />}
+                    onClick={handleBlockUser}
+                  >
+                    {userData.is_blocked ? "Unblock user" : "Block user"}
+                  </DropdownItem>
+                </DropdownMenu>
+              </Dropdown>
               {conversation && (
                 <Button
                   as={Link}
@@ -227,13 +327,22 @@ export const UserProfileHeader = ({
           </Link>
         </div>
       </div>
-
-      <NavTab
-        items={[
-          { label: "Posts", href: `/user/${userData.username}` },
-          { label: "Reposts", href: `/user/${userData.username}/reposts` },
-        ]}
-      />
+      {userData.is_blocked && (
+        <NotFoundSection
+          page="User blocked"
+          title={`@${userData.username} is blocked`}
+          description="This user is currently blocked and will no longer be able to interact with you."
+          hideNavbar
+        />
+      )}
+      {!userData.is_blocked && (
+        <NavTab
+          items={[
+            { label: "Posts", href: `/user/${userData.username}` },
+            { label: "Reposts", href: `/user/${userData.username}/reposts` },
+          ]}
+        />
+      )}
     </div>
   );
 };

@@ -7,10 +7,34 @@ export const getPost = async ({
   id: number;
   userId?: number;
 }) => {
+  let skipBlockCheck = false;
+  if (userId) {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (user && ["MODERATOR", "SUPERUSER"].includes(user.role)) {
+      skipBlockCheck = true;
+    }
+  }
+
   const post = await db.post.findUnique({
     where: {
       id: id,
       deleted_at: null,
+      AND:
+        userId && !skipBlockCheck
+          ? {
+              NOT: {
+                OR: [
+                  {
+                    author: { blocked_users: { some: { blocked_id: userId } } },
+                  },
+                  { author: { blocked_by: { some: { blocker_id: userId } } } },
+                ],
+              },
+            }
+          : {},
     },
     include: {
       parent: {
@@ -124,10 +148,34 @@ export const getPosts = async ({
   userId?: number | null;
   sort?: "desc" | "asc";
 }) => {
+  let skipBlockCheck = false;
+  if (userId) {
+    const user = await db.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+    if (user && ["MODERATOR", "SUPERUSER"].includes(user.role)) {
+      skipBlockCheck = true;
+    }
+  }
+
   const posts = await db.post.findMany({
     where: {
       ...where,
       deleted_at: null,
+      AND:
+        userId && !skipBlockCheck
+          ? {
+              NOT: {
+                OR: [
+                  {
+                    author: { blocked_users: { some: { blocked_id: userId } } },
+                  },
+                  { author: { blocked_by: { some: { blocker_id: userId } } } },
+                ],
+              },
+            }
+          : {},
     },
     skip,
     take: limit,

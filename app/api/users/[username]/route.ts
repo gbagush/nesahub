@@ -11,8 +11,34 @@ export async function GET(
     const username = (await params).username;
     const { userId: clerkId } = await auth();
 
+    let skipBlockCheck = false;
+    let current_user;
+
+    if (clerkId) {
+      current_user = await db.user.findUnique({
+        where: { clerk_id: clerkId },
+      });
+      if (
+        current_user &&
+        ["MODERATOR", "SUPERUSER"].includes(current_user.role)
+      ) {
+        skipBlockCheck = true;
+      }
+    }
+
     const user = await db.user.findUnique({
-      where: { username },
+      where: {
+        username,
+        ...(current_user?.id &&
+          !skipBlockCheck && {
+            blocked_users: {
+              none: {
+                blocked_id: current_user?.id,
+              },
+            },
+          }),
+      },
+
       select: {
         id: true,
         first_name: true,
@@ -40,6 +66,19 @@ export async function GET(
                 },
               }
             : false,
+        blocked_by:
+          clerkId !== null
+            ? {
+                where: {
+                  blocker: {
+                    clerk_id: clerkId,
+                  },
+                },
+                select: {
+                  blocked_id: true,
+                },
+              }
+            : false,
       },
     });
 
@@ -47,8 +86,9 @@ export async function GET(
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    const { followers, ...rest } = user;
+    const { followers, blocked_by, ...rest } = user;
     const is_followed = Array.isArray(followers) && followers.length > 0;
+    const is_blocked = !!blocked_by?.length;
 
     return NextResponse.json(
       {
@@ -56,6 +96,7 @@ export async function GET(
         data: {
           ...rest,
           is_followed,
+          is_blocked,
         },
       },
       { status: 200 }

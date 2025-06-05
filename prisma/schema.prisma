@@ -23,23 +23,26 @@ model User {
   banned_until  DateTime?
   deleted_at    DateTime?
 
-  posts         Post[]         @relation("UserPosts")
-  liked_post    PostLike[]     @relation("UserToPostLikes")
-  disliked_post PostDislike[]  @relation("UserToPostDislikes")
-  reposts       PostRepost[]   @relation("UserToPostReposts")
-  saved_posts   PostSave[]     @relation("UserToPostSaves")
+  posts                Post[]                    @relation("UserPosts")
+  liked_post           PostLike[]                @relation("UserToPostLikes")
+  disliked_post        PostDislike[]             @relation("UserToPostDislikes")
+  reposts              PostRepost[]              @relation("UserToPostReposts")
+  saved_posts          PostSave[]                @relation("UserToPostSaves")
 
-  following     User[]         @relation("UserFollows")
-  followers     User[]         @relation("UserFollows")
+  following            User[]                    @relation("UserFollows")
+  followers            User[]                    @relation("UserFollows")
 
-  conversations ConversationParticipant[] @relation("UserConversations")
-  sent_messages Message[]                 @relation("UserMessages")
+  conversations        ConversationParticipant[] @relation("UserConversations")
+  sent_messages        Message[]                 @relation("UserMessages")
  
-  post_reports  PostReport[] @relation("ReportAuthor")
-  processed_reports  PostReport[] @relation("ReportProcessor")
+  post_reports         PostReport[]              @relation("ReportAuthor")
+  processed_reports    PostReport[]              @relation("ReportProcessor")
 
-  moderated_actions    ModeratorActionLog[] @relation("UserModeratedActions")
-  moderation_targets   ModeratorActionLog[] @relation("UserModerationTargets")
+  blocked_users        UserBlock[]               @relation("UserBlocks")
+  blocked_by           UserBlock[]               @relation("UserBlockedBy")
+
+  moderated_actions    ModeratorActionLog[]      @relation("UserModeratedActions")
+  moderation_targets   ModeratorActionLog[]      @relation("UserModerationTargets")
 
   @@map("users")
 }
@@ -232,6 +235,18 @@ model ModeratorActionLog {
   created_at      DateTime        @default(now())
 
   @@map("moderator_logs")
+}
+
+model UserBlock {
+  blocker_id  Int
+  blocked_id  Int
+  created_at  DateTime @default(now())
+
+  blocker     User @relation("UserBlocks", fields: [blocker_id], references: [id])
+  blocked     User @relation("UserBlockedBy", fields: [blocked_id], references: [id])
+
+  @@id([blocker_id, blocked_id])
+  @@map("user_blocks")
 }
 
 
