@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 
 import Image from "next/image";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useTheme } from "next-themes";
 
@@ -15,6 +15,7 @@ import { GifPopover } from "./post-gif-popover";
 import { Image as ImageIcon, Smile, X } from "lucide-react";
 import { Popover, PopoverTrigger, PopoverContent } from "@heroui/popover";
 import { Textarea } from "@heroui/input";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 import { Theme } from "emoji-picker-react";
 import type { Post } from "@/types/post";
@@ -34,12 +35,15 @@ export const CreatePostForm = ({
   const [loading, setLoading] = useState(false);
   const [gif, setGif] = useState("");
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [turnstileToken, setTurnstileToken] = useState("");
 
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionResults, setMentionResults] = useState<User[]>([]);
   const [showMentions, setShowMentions] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const turnstileRef = useRef<any>();
+
   const { user } = useUser();
   const { theme } = useTheme();
 
@@ -76,6 +80,7 @@ export const CreatePostForm = ({
       setLoading(true);
       const formData = new FormData();
       formData.append("content", content);
+      formData.append("token", turnstileToken);
       if (parentId) formData.append("parent_id", parentId.toString());
       if (gif) formData.append("giphy", gif);
       mediaFiles.forEach((file) => formData.append("media", file));
@@ -87,11 +92,14 @@ export const CreatePostForm = ({
           description: "Post created successfully.",
           color: "success",
         });
+
+        onNewPost(response.data.data);
         setContent("");
         setGif("");
         setMediaFiles([]);
         if (fileInputRef.current) fileInputRef.current.value = "";
-        onNewPost(response.data.data);
+        turnstileRef.current?.reset();
+        setTurnstileToken("");
       }
     } catch (error: any) {
       addToast({
@@ -249,6 +257,13 @@ export const CreatePostForm = ({
                 ))}
               </div>
             )}
+
+            <Turnstile
+              ref={turnstileRef}
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ""}
+              onSuccess={setTurnstileToken}
+              options={{ refreshExpired: "auto" }}
+            />
 
             <div className="flex justify-between items-center mt-2">
               <div className="flex items-center gap-4">

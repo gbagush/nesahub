@@ -161,8 +161,6 @@ export const PostCard = ({
 
   const media = post.media ?? [];
 
-  console.log(user?.publicMetadata.role);
-
   return (
     <div
       className={`${isDeleted ? "hidden" : "flex flex-col"} p-4 gap-4 w-full border-b border-foreground-100`}

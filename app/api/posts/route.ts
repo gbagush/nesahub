@@ -8,6 +8,7 @@ import { containsBadWord } from "@/lib/badWordsChecker/main";
 import { getUserByClerkId } from "@/services/user";
 import { uploadToFtp } from "@/lib/ftp";
 import { getOXAResponseAndReply } from "@/lib/oxa-ai";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 const MAX_IMAGES = 3;
 const MAX_IMAGE_SIZE = 1024 * 1024;
@@ -29,6 +30,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
 
     const content = formData.get("content")?.toString() || "";
+    const token = formData.get("token")?.toString() || "";
     const giphy = formData.get("giphy")?.toString() || "";
     const parent_id = formData.get("parent_id")
       ? Number(formData.get("parent_id"))
@@ -53,6 +55,15 @@ export async function POST(request: NextRequest) {
     if (mediaFiles.length > MAX_IMAGES) {
       return NextResponse.json(
         { message: "You can only upload up to 3 images." },
+        { status: 400 }
+      );
+    }
+
+    const isTokenVerified = await verifyTurnstileToken(token);
+
+    if (!isTokenVerified) {
+      return NextResponse.json(
+        { message: "Bot verification failed. Please try again." },
         { status: 400 }
       );
     }
