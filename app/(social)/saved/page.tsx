@@ -48,8 +48,8 @@ export default function SavedPostsPage() {
       {posts.length === 0 && !loading && (
         <NotFoundSection
           page="User Reposts"
-          title="No Reposts Yet"
-          description="This user hasn't reposted anything yet."
+          title="No Saved Posts Yet"
+          description="You haven't saved any posts yet. Save posts to access them quickly anytime."
           hideNavbar
         />
       )}

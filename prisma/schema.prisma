@@ -41,6 +41,9 @@ model User {
   blocked_users        UserBlock[]               @relation("UserBlocks")
   blocked_by           UserBlock[]               @relation("UserBlockedBy")
 
+  notifications        Notification[]            @relation("UserNotifications")
+  sent_notifications   Notification[]            @relation("InitiatorNotifications")
+
   moderated_actions    ModeratorActionLog[]      @relation("UserModeratedActions")
   moderation_targets   ModeratorActionLog[]      @relation("UserModerationTargets")
 
@@ -69,6 +72,8 @@ model Post {
   disliked_by   PostDislike[]  @relation("PostToUserDislikes")
   reposted_by   PostRepost[]   @relation("PostToUserReposts")
   saved_by      PostSave[]     @relation("PostToUserSaves")
+
+  notifications       Notification[] @relation("PostNotifications")
 
   reports PostReport[]
 
@@ -249,6 +254,25 @@ model UserBlock {
   @@map("user_blocks")
 }
 
+model Notification {
+  id              Int       @id @default(autoincrement())
+  recipient_id    Int
+  recipient       User      @relation("UserNotifications", fields: [recipient_id], references: [id])
+  
+  type            NotificationType
+  created_at      DateTime  @default(now())
+
+  initiator_id    Int?
+  initiator       User?     @relation("InitiatorNotifications", fields: [initiator_id], references: [id])
+
+  post_id         Int?
+  post            Post?     @relation("PostNotifications", fields: [post_id], references: [id])
+
+  message         String?   @db.Text
+
+  @@map("notifications")
+}
+
 
 enum MediaSource {
   USERCONTENT
@@ -287,4 +311,11 @@ enum ModerationAction {
   DELETE_POST
   BAN_USER
   UNBAN_USER
+}
+
+enum NotificationType {
+  NEW_FOLLOWER
+  POST_REPLY
+  POST_MENTION
+  SYSTEM_MESSAGE
 }

@@ -44,6 +44,7 @@ export const PostCard = ({
   const [post, setPost] = useState<Post>(initialPost);
   const [isDeleted, setIsDeleted] = useState(false);
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const { author, aiBot, content, created_at, _count } = post;
 
@@ -300,9 +301,25 @@ export const PostCard = ({
             <p className="text-sm text-foreground-500">Reply deleted post</p>
           )}
 
-          <p className="text-sm whitespace-pre-line break-words">
-            {parseContent(content)}
-          </p>
+          {content.length > 300 ? (
+            <div>
+              <p className="text-sm whitespace-pre-line break-words">
+                {isExpanded
+                  ? parseContent(content)
+                  : parseContent(content.slice(0, 300).trim() + "...")}
+              </p>
+              <button
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-primary text-sm mt-1"
+              >
+                {isExpanded ? "Show Less" : "Show More"}
+              </button>
+            </div>
+          ) : (
+            <p className="text-sm whitespace-pre-line break-words">
+              {parseContent(content)}
+            </p>
+          )}
 
           {media.length > 0 && (
             <div

@@ -24,7 +24,7 @@ export const NavTab = ({
           <Link
             key={index}
             href={item.href}
-            className="relative flex w-full items-center justify-center hover:bg-foreground-50"
+            className="relative flex w-full items-center justify-center transition-all duration-200 hover:bg-foreground/15 hover:backdrop-blur-md"
           >
             <span className="text-sm">{item.label}</span>
             {isActive && (

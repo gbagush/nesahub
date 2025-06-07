@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { createNotification } from "@/services/notification";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -61,6 +62,12 @@ export async function POST(
         { status: 400 }
       );
     }
+
+    await createNotification({
+      recipientId: followedUser.id,
+      type: "NEW_FOLLOWER",
+      initiatorId: user.id,
+    });
 
     await db.user.update({
       where: {

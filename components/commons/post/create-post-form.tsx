@@ -138,27 +138,11 @@ export const CreatePostForm = ({
                   setShowMentions(true);
 
                   try {
-                    const res = await axios.get(
+                    const response = await axios.get(
                       `/api/users?keyword=${keyword}`
                     );
-                    let users: User[] = res.data.data;
 
-                    if ("oxa".startsWith(keyword.toLowerCase())) {
-                      users.unshift({
-                        id: 1,
-                        username: "oxa",
-                        first_name: "OXA",
-                        last_name: "AI",
-                        profile_pict:
-                          "https://nhdevcdn.zeth.biz.id/images/OXA.png",
-                        bio: "AI assistant from Nesahub",
-                        gender: "NOT_SET",
-                        created_at: new Date().toISOString(),
-                        clerk_id: "",
-                      });
-                    }
-
-                    setMentionResults(users);
+                    setMentionResults(response.data.data);
                   } catch (err) {
                     setMentionResults([]);
                   }

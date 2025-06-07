@@ -9,6 +9,7 @@ import { usePathname } from "next/navigation";
 
 import { Button } from "@heroui/button";
 import {
+  Bell,
   Bookmark,
   Home,
   LogOut,
@@ -48,6 +49,16 @@ export const Sidebar = () => {
       href: "/search",
     },
     {
+      title: "Notifications",
+      icon: (
+        <Bell
+          size={24}
+          fill={path.startsWith("/notifications") ? "currentColor" : "none"}
+        />
+      ),
+      href: "/notifications",
+    },
+    {
       title: "Messages",
       icon: (
         <Mail size={24} strokeWidth={path.startsWith("/messages") ? 3 : 2} />
@@ -57,7 +68,10 @@ export const Sidebar = () => {
     {
       title: "Saved",
       icon: (
-        <Bookmark size={24} strokeWidth={path.startsWith("/saved") ? 3 : 2} />
+        <Bookmark
+          size={24}
+          fill={path.startsWith("/saved") ? "currentColor" : "none"}
+        />
       ),
       href: "/saved",
     },

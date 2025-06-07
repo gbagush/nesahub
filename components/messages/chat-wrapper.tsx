@@ -346,7 +346,7 @@ export const ChatWarpper = ({ conversationId }: { conversationId: number }) => {
       )}
 
       {conversation && (
-        <div className="flex flex-col h-screen max-lg:h-[calc(100vh-64px)]">
+        <div className="flex flex-col h-screen">
           <ChatHeader otherParticipant={otherParticipant} />
 
           <div

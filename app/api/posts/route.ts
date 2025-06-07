@@ -9,6 +9,7 @@ import { getUserByClerkId } from "@/services/user";
 import { uploadToFtp } from "@/lib/ftp";
 import { getOXAResponseAndReply } from "@/lib/oxa-ai";
 import { verifyTurnstileToken } from "@/lib/turnstile";
+import { createNotification } from "@/services/notification";
 
 const MAX_IMAGES = 3;
 const MAX_IMAGE_SIZE = 1024 * 1024;
@@ -66,6 +67,20 @@ export async function POST(request: NextRequest) {
         { message: "Bot verification failed. Please try again." },
         { status: 400 }
       );
+    }
+
+    let parent_post;
+    if (parent_id) {
+      parent_post = await db.post.findFirst({
+        where: { id: parent_id },
+      });
+
+      if (!parent_post) {
+        return NextResponse.json(
+          { message: "Parent post not found" },
+          { status: 404 }
+        );
+      }
     }
 
     const savedMedia = [];
@@ -149,6 +164,52 @@ export async function POST(request: NextRequest) {
         media: true,
       },
     });
+
+    if (parent_post) {
+      if (!parent_post.user_id) return;
+      if (parent_post.user_id === user.id) return;
+
+      try {
+        await createNotification({
+          recipientId: parent_post.user_id,
+          type: "POST_REPLY",
+          initiatorId: user.id,
+          postId: savedPost.id,
+        });
+      } catch (error) {
+        console.error("Error creating notification for reply post:", error);
+      }
+    }
+
+    const mentionRegex = /@(\w+)/g;
+    const mentions = [];
+    let match;
+
+    while ((match = mentionRegex.exec(content)) !== null) {
+      const username = match[1];
+      mentions.push(username);
+    }
+
+    for (const username of mentions) {
+      if (username === "oxa") continue;
+
+      const mentionedUser = await db.user.findUnique({
+        where: { username },
+      });
+
+      if (mentionedUser && mentionedUser.id !== user.id) {
+        try {
+          await createNotification({
+            recipientId: mentionedUser.id,
+            type: "POST_MENTION",
+            initiatorId: user.id,
+            postId: savedPost.id,
+          });
+        } catch (error) {
+          console.error(`Failed to notify mention for @${username}:`, error);
+        }
+      }
+    }
 
     if (content.toLowerCase().startsWith("@oxa")) {
       const messageToAI = content.replace(/^@oxa\s*/i, "").trim();

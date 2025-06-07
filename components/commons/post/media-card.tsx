@@ -62,6 +62,7 @@ export const MediaCard = ({
         classNames={{
           body: "p-0",
         }}
+        placement="center"
       >
         <ModalContent>
           <ModalBody>

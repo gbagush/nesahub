@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { auth } from "@clerk/nextjs/server";
 import { getUserByClerkId } from "@/services/user";
 import { reportCategories } from "@/config/site";
+import { createNotification } from "@/services/notification";
 
 const validCategoryValues = reportCategories.map((c) => c.value);
 
@@ -66,6 +67,14 @@ export async function DELETE(
         reason: reason || "",
       },
     });
+
+    if (post.user_id) {
+      await createNotification({
+        recipientId: post.user_id!,
+        type: "SYSTEM_MESSAGE",
+        message: `Your post has been removed for violating our guidelines related to \"${violation_type.replace(/_/g, " ")}\". This action was taken based on a user report and verified by a moderator.`,
+      });
+    }
 
     return NextResponse.json(
       { message: "Success moderate post" },

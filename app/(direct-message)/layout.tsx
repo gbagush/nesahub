@@ -12,10 +12,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       <ChatList className="hidden lg:flex" />
 
-      <div className="flex flex-col w-full lg:w-2/5 lg:border-x lg:border-foreground-100 pb-[72px] lg:pb-0">
+      <div className="flex flex-col w-full lg:w-2/5 lg:border-x lg:border-foreground-100">
         {children}
       </div>
-      <MobileDock />
     </div>
   );
 }

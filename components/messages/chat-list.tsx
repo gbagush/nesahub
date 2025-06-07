@@ -14,6 +14,7 @@ import { Spinner } from "@heroui/spinner";
 
 import { ChatCard } from "./chat-card";
 import type { Message } from "@/types/conversation";
+import { Navbar } from "../commons/navigations/social/navbar";
 
 export const ChatList = ({ className = "" }: { className?: string }) => {
   const { user } = useUser();
@@ -89,64 +90,68 @@ export const ChatList = ({ className = "" }: { className?: string }) => {
 
   return (
     <div
-      className={`flex flex-col gap-4 w-full lg:w-2/5 lg:border-l lg:border-foreground-100 pb-[72px] lg:pb-0 p-4 overflow-y-auto ${className}`}
+      className={`flex flex-col w-full lg:w-2/5 lg:border-l lg:border-foreground-100 pb-[72px] lg:pb-0 overflow-y-auto ${className}`}
     >
-      <h4 className="font-semibold text-xl">Messages</h4>
+      <Navbar title="Messages" className="block lg:hidden" />
 
-      <Input
-        radius="full"
-        placeholder="Search messages"
-        variant="bordered"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        startContent={<Search size={16} />}
-      />
+      <div className="p-4 flex flex-col gap-4">
+        <h4 className="hidden lg:block font-semibold text-xl">Messages</h4>
 
-      {loading && <Spinner className="py-4" />}
+        <Input
+          radius="full"
+          placeholder="Search messages"
+          variant="bordered"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          startContent={<Search size={16} />}
+        />
 
-      {!loading &&
-        conversations
-          .filter((conversation) => {
-            const otherParticipant = conversation.participants.find(
-              (p) => p.user.username !== user?.username
-            );
+        {loading && <Spinner className="py-4" />}
 
-            if (!otherParticipant) return false;
+        {!loading &&
+          conversations
+            .filter((conversation) => {
+              const otherParticipant = conversation.participants.find(
+                (p) => p.user.username !== user?.username
+              );
 
-            const fullName = `${otherParticipant.user.first_name} ${otherParticipant.user.last_name}`;
-            const username = otherParticipant.user.username;
+              if (!otherParticipant) return false;
 
-            return (
-              fullName.toLowerCase().includes(search.toLowerCase()) ||
-              username.toLowerCase().includes(search.toLowerCase())
-            );
-          })
-          .map((conversation) => {
-            const otherParticipant = conversation.participants.find(
-              (p) => p.user.username !== user?.username
-            );
+              const fullName = `${otherParticipant.user.first_name} ${otherParticipant.user.last_name}`;
+              const username = otherParticipant.user.username;
 
-            const currentUserParticipant = conversation.participants.find(
-              (p) => p.user.username === user?.username
-            );
+              return (
+                fullName.toLowerCase().includes(search.toLowerCase()) ||
+                username.toLowerCase().includes(search.toLowerCase())
+              );
+            })
+            .map((conversation) => {
+              const otherParticipant = conversation.participants.find(
+                (p) => p.user.username !== user?.username
+              );
 
-            if (!otherParticipant || !currentUserParticipant) return null;
+              const currentUserParticipant = conversation.participants.find(
+                (p) => p.user.username === user?.username
+              );
 
-            return (
-              <ChatCard
-                key={conversation.id}
-                conversation={conversation}
-                otherParticipant={otherParticipant}
-                isUnread={
-                  conversation.messages.length > 0 &&
-                  conversation.messages[0].senderId ===
-                    otherParticipant.user.id &&
-                  new Date(currentUserParticipant.last_read_at) <
-                    new Date(conversation.messages[0].created_at)
-                }
-              />
-            );
-          })}
+              if (!otherParticipant || !currentUserParticipant) return null;
+
+              return (
+                <ChatCard
+                  key={conversation.id}
+                  conversation={conversation}
+                  otherParticipant={otherParticipant}
+                  isUnread={
+                    conversation.messages.length > 0 &&
+                    conversation.messages[0].senderId ===
+                      otherParticipant.user.id &&
+                    new Date(currentUserParticipant.last_read_at) <
+                      new Date(conversation.messages[0].created_at)
+                  }
+                />
+              );
+            })}
+      </div>
     </div>
   );
 };
