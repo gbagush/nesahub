@@ -9,7 +9,10 @@ services:
       - "host.docker.internal:host-gateway"
     networks:
       - app-network
-      - loki
+      - monitoring
+    labels:
+     - "monitoring.service=WebApp"
+     - "monitoring.description=Main Web Application"
 
   socket:
     build: ./socket-server
@@ -19,14 +22,18 @@ services:
       - ./socket-server/.env
     networks:
       - app-network
-      - loki
+      - monitoring
+    labels:
+     - "monitoring.service=SocketServer"
+     - "monitoring.description=Socket Server"
 
   loki:
     image: grafana/loki:3.4.1
     command: -config.file=/etc/loki/local-config.yaml
     ports:
       - "3100:3100"
-    networks: [loki]
+    networks:
+      - monitoring
 
   promtail:
     image: grafana/promtail:3.4.1
@@ -34,35 +41,123 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./promtail-config.yaml:/etc/promtail/promtail.yaml
     command: -config.file=/etc/promtail/promtail.yaml
-    networks: [loki]
+    networks: 
+      - monitoring
+    labels:
+      - "monitoring.service=Promtail"
+      - "monitoring.description=Promtail Server"
+    deploy:
+      resources:
+        limits:
+          memory: 64M         
+          cpus: '0.05'
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - 9100
+    ports:
+      - 9100:9100
+    networks:
+      - monitoring
+    labels:
+      - "monitoring.service=NodeExporter"
+      - "monitoring.description=Node Exporter"
+    deploy:
+      resources:
+        limits:
+          memory: 32M         
+          cpus: '0.05'
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      # - /mnt/d/Fullstack/NextJs/nesahub/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=12h'    
+      - '--storage.tsdb.retention.size=50MB'  
+      - '--web.enable-lifecycle'
+    expose:
+      - 9090
+    ports:
+      - 9090:9090
+    networks:
+      - monitoring
+    labels:
+      - "monitoring.service=Prometheus"
+      - "monitoring.description=Prometheus Server"
+    deploy:
+      resources:
+        limits:
+          memory: 150M       
+          cpus: '0.15'
 
   grafana:
     image: grafana/grafana:latest
     ports:
       - "3000:3000"
-    networks: [loki]
+    networks:
+      - monitoring
     environment:
       - GF_AUTH_ANONYMOUS_ENABLED=true
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
-    entrypoint:
-      - sh
-      - -euc
-      - |
-        mkdir -p /etc/grafana/provisioning/datasources
-        cat <<EOF >/etc/grafana/provisioning/datasources/loki.yaml
-        apiVersion: 1
-        datasources:
-          - name: Loki
-            type: loki
-            url: http://loki:3100
-            access: proxy
-            isDefault: true
-        EOF
-        /run.sh
+    labels:
+      - "monitoring.service=Grafana"
+      - "monitoring.description=Grafana Server"
+    deploy:
+      resources:
+        limits:
+          memory: 128M        
+          cpus: '0.1'
+  
+
+  cadvisor:
+      image: gcr.io/cadvisor/cadvisor:latest
+      container_name: cadvisor
+      restart: unless-stopped
+      ports:
+        - 8080:8080
+      volumes:
+        - /:/rootfs:ro
+        - /var/run:/var/run:ro
+        - /sys:/sys:ro
+        - /var/lib/docker/:/var/lib/docker:ro
+        - /dev/disk/:/dev/disk:ro
+      privileged: true
+      networks:
+        - monitoring  
+      labels:
+        - "monitoring.service=Cadvisor"
+        - "monitoring.description=Cadvisor Server"
+      deploy:
+        resources:
+          limits:
+            memory: 64M         
+            cpus: '0.05'
 
 networks:
   app-network:
     driver: bridge
-  loki:
+  monitoring:
     external: true
+
+volumes:
+  prometheus_data: {}
