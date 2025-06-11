@@ -27,19 +27,22 @@ This guide will walk you through deploying the Nesahub application using Docker 
 3.  **Prepare production environment variables**
 
     ```bash
+    cp .env.grafana.example .env.grafana
+    nano .env.grafana # or use any text editor to configure the environment
+
     cd webapp
     cp .env.example .env
-    nano .env         # or use any text editor to configure the environment
+    nano .env         # configure again for webapp
 
     cd ../socket-server
     cp .env.example .env
     nano .env         # configure again for socket-server
     ```
 
-4.  **Create loki network**
+4.  **Create monitoring network**
 
     ```bash
-    docker network create loki
+    docker network create monitoring
     ```
 
 5.  **Build and run the application**
