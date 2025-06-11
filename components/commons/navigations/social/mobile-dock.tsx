@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { useClerk, useUser } from "@clerk/nextjs";
 import {
+  Bell,
   Bookmark,
   Home,
   LogOut,
@@ -16,7 +17,6 @@ import {
   Dropdown,
   DropdownTrigger,
   DropdownMenu,
-  DropdownSection,
   DropdownItem,
 } from "@heroui/dropdown";
 import { Avatar } from "@heroui/avatar";
@@ -25,18 +25,18 @@ import { useRouter } from "next/navigation";
 
 export default function MobileDock() {
   return (
-    <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between bg-background border-t border-foreground-100 h-16 px-4 lg:hidden">
+    <div className="fixed bottom-0 left-0 right-0 flex items-center justify-between bg-background border-t border-foreground-100 h-16 px-4 z-10 lg:hidden">
       <Link href="/home" className="flex flex-col items-center gap-1">
         <Home className="w-5 h-5 " />
       </Link>
       <Link href="/search" className="flex flex-col items-center gap-1">
         <Search className="w-5 h-5 " />
       </Link>
+      <Link href="/notifications" className="flex flex-col items-center gap-1">
+        <Bell className="w-5 h-5 " />
+      </Link>
       <Link href="/messages" className="flex flex-col items-center gap-1">
         <Mail className="w-5 h-5 " />
-      </Link>
-      <Link href="/saved" className="flex flex-col items-center gap-1">
-        <Bookmark className="w-5 h-5 " />
       </Link>
       <SidebarUserProfile />
     </div>
@@ -66,6 +66,13 @@ const SidebarUserProfile = () => {
           onClick={() => router.push(`/user/${user?.username}`)}
         >
           Profile
+        </DropdownItem>
+        <DropdownItem
+          key="saved"
+          startContent={<Bookmark size={16} />}
+          onClick={() => router.push(`/saved`)}
+        >
+          Saved Posts
         </DropdownItem>
         <DropdownItem
           key="account"

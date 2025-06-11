@@ -1,7 +1,5 @@
-import MobileDock from "@/components/commons/navigations/social/mobile-dock";
 import { Sidebar } from "@/components/commons/navigations/social/sidebar";
 import { ChatList } from "@/components/messages/chat-list";
-import { SocketProvider } from "@/providers/socket-provider";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
